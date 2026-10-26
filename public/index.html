@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UNDERCOVER — Wi-Fi Multiplayer Party Game</title>
+  <meta name="description" content="A thrilling social deduction party game. Find the Undercover player among your friends over home Wi-Fi!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <!-- Socket.IO client served directly from the local Node server -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Top Bar Navigation -->
+    <header class="top-nav">
+      <div class="brand" id="brand-logo">
+        <span class="logo-icon">🎭</span>
+        <span class="logo-text">UNDERCOVER</span>
+      </div>
+      <div class="nav-controls">
+        <div id="room-badge" class="badge room-pill hidden" title="Current Room">
+          <span class="label">ROOM</span>
+          <span id="nav-room-code" class="code">----</span>
+        </div>
+        <button id="btn-audio-toggle" class="btn-icon" aria-label="Toggle Sound" title="Sound Effects">
+          <span id="audio-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Screens Container -->
+    <main class="content-area">
+
+      <!-- ==================== SCREEN 1: HOME ==================== -->
+      <section id="screen-home" class="screen active">
+        <div class="hero-section">
+          <div class="hero-badge">✦ LOCAL WI-FI PARTY GAME ✦</div>
+          <h1 class="hero-title" aria-label="Find the Undercover">
+            <span class="title-top">FIND THE</span>
+            <span class="title-bottom">UNDERCOVER</span>
+          </h1>
+          <p class="hero-subtitle">
+            Get your secret word, listen to suspicious clues, and vote out the imposter before they outnumber you!
+          </p>
+
+          <div class="action-card">
+            <button id="btn-goto-create" class="btn btn-play btn-lg">
+              <span class="btn-icon">🎮</span> Create Room (Host)
+            </button>
+            <button id="btn-goto-join" class="btn btn-yellow btn-lg">
+              <span class="btn-icon">🔑</span> Join Room with Code
+            </button>
+            <button id="btn-open-rules" class="btn btn-ghost-game">
+              <span class="btn-icon">📖</span> How to Play &amp; Rules
+            </button>
+          </div>
+
+          <div class="network-badge">
+            <span class="pulse-indicator"></span>
+            <span id="home-network-info">Playing over local Wi-Fi</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 2: CREATE ROOM ==================== -->
+      <section id="screen-create" class="screen">
+        <div class="card form-card">
+          <div class="card-header">
+            <h2>Create New Room</h2>
+            <p>Configure your match settings and invite nearby players.</p>
+          </div>
+
+          <form id="form-create-room">
+            <div class="form-group">
+              <label for="create-nickname">Your Nickname</label>
+              <input type="text" id="create-nickname" class="input-field" placeholder="e.g. Detective Sam" maxlength="16" required autocomplete="off">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="create-max-players">Player Limit</label>
+                <select id="create-max-players" class="input-field select-field">
+                  <option value="3">3 Players</option>
+                  <option value="4">4 Players</option>
+                  <option value="5">5 Players</option>
+                  <option value="6" selected>6 Players</option>
+                </select>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="create-undercover-count">Undercovers</label>
+                <select id="create-undercover-count" class="input-field select-field">
+                  <option value="1" selected>1 Undercover</option>
+                  <option value="2">2 Undercovers (5-6p)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="create-category">Word Category</label>
+              <select id="create-category" class="input-field select-field">
+                <option value="Random" selected>🎲 Random / All Categories</option>
+                <option value="Food">🍕 Food & Drinks</option>
+                <option value="Animals">🦁 Animals & Nature</option>
+                <option value="Objects">🎸 Objects & Daily Items</option>
+                <option value="Places">🏝️ Places & Geography</option>
+                <option value="Sports">⚽ Sports & Activities</option>
+                <option value="Movies">🎬 Movies & Entertainment</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="create-discussion-time">Discussion Timer</label>
+              <select id="create-discussion-time" class="input-field select-field">
+                <option value="30">30 Seconds (Fast)</option>
+                <option value="45" selected>45 Seconds (Standard)</option>
+                <option value="60">60 Seconds (Relaxed)</option>
+                <option value="90">90 Seconds (Deep Debate)</option>
+              </select>
+            </div>
+
+            <div class="btn-stack">
+              <button type="submit" id="btn-submit-create" class="btn btn-primary btn-block">
+                Create Room Lobby
+              </button>
+              <button type="button" class="btn btn-ghost btn-block btn-nav-back">
+                Back to Menu
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 3: JOIN ROOM ==================== -->
+      <section id="screen-join" class="screen">
+        <div class="card form-card">
+          <div class="card-header">
+            <h2>Join Room</h2>
+            <p>Enter the 4-letter room code shown on the host's screen.</p>
+          </div>
+
+          <form id="form-join-room">
+            <div class="form-group">
+              <label for="join-room-code">Room Code</label>
+              <input type="text" id="join-room-code" class="input-field room-code-input" placeholder="e.g. 7K2M" maxlength="4" required autocomplete="off" autocapitalize="characters">
+            </div>
+
+            <div class="form-group">
+              <label for="join-nickname">Your Nickname</label>
+              <input type="text" id="join-nickname" class="input-field" placeholder="e.g. SecretAgent" maxlength="16" required autocomplete="off">
+            </div>
+
+            <div class="btn-stack">
+              <button type="submit" id="btn-submit-join" class="btn btn-secondary btn-block">
+                Enter Room
+              </button>
+              <button type="button" class="btn btn-ghost btn-block btn-nav-back">
+                Back to Menu
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 4: LOBBY ==================== -->
+      <section id="screen-lobby" class="screen">
+        <div class="lobby-container">
+          <div class="lobby-header card">
+            <div class="room-code-display">
+              <span class="room-label">ROOM CODE</span>
+              <div class="code-box">
+                <span id="lobby-code" class="code-text">----</span>
+                <button id="btn-copy-code" class="btn-copy" title="Copy Room Code">📋</button>
+              </div>
+            </div>
+
+            <div class="lobby-stats">
+              <div class="stat-pill">
+                <span class="stat-label">Players:</span>
+                <span id="lobby-player-count" class="stat-val">1/6</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-label">Category:</span>
+                <span id="lobby-category-badge" class="stat-val">Random</span>
+              </div>
+            </div>
+
+            <div class="wifi-join-hint">
+              <span>Friends on Wi-Fi open:</span>
+              <strong id="lobby-lan-url">http://192.168.1.9:3000</strong>
+            </div>
+          </div>
+
+          <!-- Player List Card -->
+          <div class="card player-list-card">
+            <div class="card-header flex-between">
+              <h3>Connected Players</h3>
+              <span id="lobby-min-warning" class="tag tag-warn">Min 3 Players Needed</span>
+            </div>
+
+            <div id="lobby-players-grid" class="players-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Lobby Action Bar -->
+          <div class="card action-bar">
+            <!-- Non-host ready toggle -->
+            <button id="btn-toggle-ready" class="btn btn-outline btn-lg flex-1">
+              <span id="ready-status-icon">⏳</span> Mark Ready
+            </button>
+
+            <!-- Host Start Button -->
+            <button id="btn-start-game" class="btn btn-primary btn-lg flex-1 hidden" disabled>
+              <span class="btn-icon">🚀</span> Start Game
+            </button>
+          </div>
+
+          <!-- Host Settings Drawer (Host only) -->
+          <div id="lobby-host-controls" class="card host-controls hidden">
+            <h4>Host Settings</h4>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Category</label>
+                <select id="lobby-setting-category" class="input-field select-sm">
+                  <option value="Random">🎲 Random</option>
+                  <option value="Food">🍕 Food</option>
+                  <option value="Animals">🦁 Animals</option>
+                  <option value="Objects">🎸 Objects</option>
+                  <option value="Places">🏝️ Places</option>
+                  <option value="Sports">⚽ Sports</option>
+                  <option value="Movies">🎬 Movies</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label>Undercovers</label>
+                <select id="lobby-setting-undercover" class="input-field select-sm">
+                  <option value="1">1 Undercover</option>
+                  <option value="2">2 Undercovers</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 5: GAME ACTIVE ==================== -->
+      <section id="screen-game" class="screen">
+        <div class="game-container">
+
+          <!-- Phase Indicator Header -->
+          <div class="game-status-bar card">
+            <div class="status-left">
+              <span class="round-indicator">ROUND <span id="game-round-num">1</span></span>
+              <span id="game-phase-badge" class="badge badge-phase">ROLE REVEAL</span>
+            </div>
+            <div id="game-timer-container" class="timer-pill hidden">
+              <span class="timer-icon">⏱️</span>
+              <span id="game-timer-text">45s</span>
+            </div>
+          </div>
+
+          <!-- Host In-Game Quick Action Bar -->
+          <div id="in-game-host-bar" class="card in-game-host-bar hidden">
+            <span class="host-pill">👑 HOST CONTROLS</span>
+            <div class="host-action-buttons">
+              <button id="btn-ingame-restart" class="btn btn-outline btn-sm" title="Re-deal new secret words and restart match">
+                🔄 Restart Game
+              </button>
+              <button id="btn-ingame-lobby" class="btn btn-ghost btn-sm" title="End match and return room to lobby">
+                🏠 Exit to Lobby
+              </button>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 1: ROLE REVEAL -->
+          <div id="phase-role-reveal" class="game-phase-view active">
+            <div class="privacy-warning card">
+              <span class="warn-icon">🤫</span>
+              <div>
+                <strong>Keep Your Screen Private!</strong>
+                <p>Do not show this screen to anyone sitting around you.</p>
+              </div>
+            </div>
+
+            <!-- 3D Flip Secret Card -->
+            <div class="secret-card-container">
+              <div id="secret-card" class="secret-card">
+                <!-- Card Front (Cover) -->
+                <div class="card-face card-front">
+                  <div class="card-stars">
+                    <span>⭐</span><span>⭐</span><span>⭐</span>
+                  </div>
+                  <div class="card-art">🎁</div>
+                  <div class="card-title">SECRET ROLE</div>
+                  <div class="card-tap-pill">TAP TO UNSEAL 👆</div>
+                  <div class="dossier-footer-tag">KEEP YOUR SCREEN PRIVATE</div>
+                </div>
+
+                <!-- Card Back (Secret Word) -->
+                <div class="card-face card-back">
+                  <div class="card-back-badge" id="player-role-badge">CIVILIAN</div>
+                  <div class="word-reveal-box">
+                    <span class="secret-label">YOUR WORD</span>
+                    <h2 id="player-secret-word" class="revealed-word">------</h2>
+                  </div>
+                  <p id="player-role-description" class="role-desc">
+                    Most players share this word. Give subtle clues without saying it!
+                  </p>
+                  <div class="card-tap-hint small">Tap card to hide again</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="reveal-actions">
+              <button id="btn-confirm-role" class="btn btn-primary btn-lg btn-block">
+                I Understand &amp; Am Ready for Clues
+              </button>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 2: CLUE ROUND -->
+          <div id="phase-clue-round" class="game-phase-view">
+            <div class="card turn-indicator-card">
+              <div class="turn-header">
+                <span class="turn-label">CURRENT TURN:</span>
+                <h3 id="current-turn-player-name" class="turn-player-name">Player</h3>
+              </div>
+              <p id="turn-status-message" class="turn-message">Listening to clue...</p>
+            </div>
+
+            <!-- Clue Input (Only enabled when it's your turn) -->
+            <div id="my-clue-box" class="card my-clue-card hidden">
+              <h4>It's Your Turn!</h4>
+              <p class="sub-text">Type a subtle 1-line clue describing your word without giving it away.</p>
+              <form id="form-submit-clue" class="clue-form">
+                <input type="text" id="input-clue-text" class="input-field" placeholder="Type your clue..." maxlength="50" autocomplete="off" required>
+                <button type="submit" class="btn btn-primary btn-block">Submit Public Clue</button>
+              </form>
+            </div>
+
+            <!-- Clues Board -->
+            <div class="card clues-board-card">
+              <h4>Clues This Round</h4>
+              <div id="clues-list" class="clues-list">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 3: DISCUSSION -->
+          <div id="phase-discussion" class="game-phase-view">
+            <div class="card discussion-hero">
+              <div class="timer-dial">
+                <span id="discussion-countdown" class="countdown-number">45</span>
+                <span class="countdown-unit">SECONDS</span>
+              </div>
+              <h3>Open Discussion</h3>
+              <p>Discuss the clues. Who sounded hesitant, overly vague, or out of place?</p>
+              
+              <div id="host-discussion-controls" class="hidden">
+                <button id="btn-host-skip-discussion" class="btn btn-secondary btn-sm">
+                  Advance to Voting Early
+                </button>
+              </div>
+            </div>
+
+            <!-- Clues Recap -->
+            <div class="card clues-board-card">
+              <h4>All Clues Submitted</h4>
+              <div id="discussion-clues-list" class="clues-list">
+                <!-- Clues recap -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 4: VOTING -->
+          <div id="phase-voting" class="game-phase-view">
+            <div class="card voting-intro">
+              <h3 id="voting-header-title">Cast Your Secret Vote</h3>
+              <p id="voting-header-subtitle">Select the player you suspect is the Undercover.</p>
+              <div id="vote-lock-status" class="vote-status-bar">
+                <span id="vote-count-info">0/0 votes cast</span>
+              </div>
+            </div>
+
+            <!-- Voting Grid of Active Players -->
+            <div id="voting-candidates-grid" class="voting-grid">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div class="voting-actions">
+              <button id="btn-submit-vote" class="btn btn-primary btn-lg btn-block" disabled>
+                Confirm Vote
+              </button>
+            </div>
+
+            <div id="host-voting-controls" class="hidden text-center mt-2">
+              <button id="btn-host-close-voting" class="btn btn-ghost btn-sm">
+                Host: Force Close Voting
+              </button>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 5: ELIMINATION REVEAL -->
+          <div id="phase-elimination" class="game-phase-view">
+            <div class="card elimination-card text-center">
+              <div class="suspense-icon">⚖️</div>
+              <h2 id="elimination-title">Voting Results</h2>
+              <div id="elimination-body" class="elimination-body">
+                <!-- Rendered dynamically -->
+              </div>
+              <div id="vote-breakdown" class="vote-breakdown-list">
+                <!-- Who voted for whom -->
+              </div>
+              <div id="elimination-host-actions" class="mt-3 hidden">
+                <button id="btn-continue-round" class="btn btn-primary btn-block">
+                  Next Clue Round
+                </button>
+              </div>
+
+              <!-- Tie Revote Controls -->
+              <div id="elimination-tie-actions" class="mt-3 hidden">
+                <p id="tie-countdown-hint" style="color:var(--accent-cyan); font-weight:600; font-size:0.95rem; margin-bottom:10px;">
+                  Revote starting in <strong id="tie-countdown-num">4</strong>s...
+                </p>
+                <button id="btn-start-tie-revote" class="btn btn-primary btn-block">
+                  ⚡ Start Tie Revote Now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBVIEW 6: GAME OVER / RESULTS -->
+          <div id="phase-game-over" class="game-phase-view">
+            <div class="card victory-card text-center">
+              <div class="stars-podium">
+                <span class="star-badge star-left">⭐</span>
+                <span class="star-badge star-center">⭐</span>
+                <span class="star-badge star-right">⭐</span>
+              </div>
+              <div class="ribbon-banner">
+                <h1 id="victory-team-title">Civilians Win!</h1>
+              </div>
+              <p id="victory-team-subtitle">All Undercovers have been eliminated.</p>
+
+              <!-- Words Reveal Box -->
+              <div class="secret-words-reveal card">
+                <div class="word-pair-pill">
+                  <span class="role-tag civ">Civilians Word:</span>
+                  <strong id="final-civ-word">---</strong>
+                </div>
+                <div class="word-pair-pill">
+                  <span class="role-tag und">Undercover Word:</span>
+                  <strong id="final-und-word">---</strong>
+                </div>
+              </div>
+
+              <!-- Roles Breakdown Grid -->
+              <h4>All Player Roles</h4>
+              <div id="final-roles-grid" class="final-roles-grid">
+                <!-- Rendered dynamically -->
+              </div>
+
+              <!-- Match Leaderboard -->
+              <h4 class="mt-3">Room Leaderboard</h4>
+              <div id="final-leaderboard" class="leaderboard-table">
+                <!-- Leaderboard rows -->
+              </div>
+
+              <!-- Host Replay Controls -->
+              <div id="game-over-host-controls" class="action-stack mt-3 hidden">
+                <button id="btn-next-match" class="btn btn-primary btn-lg btn-block">
+                  Play Next Round 🔄
+                </button>
+                <button id="btn-return-lobby" class="btn btn-secondary btn-block">
+                  Return to Lobby 🏠
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==================== MODAL: HOW TO PLAY ==================== -->
+    <div id="modal-rules" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>📖 How to Play Undercover</h3>
+          <button id="btn-close-rules" class="btn-icon" aria-label="Close Rules">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="rule-block">
+            <h4>🎭 1. The Secret Words</h4>
+            <p>Every player receives a secret word. Most players (<strong>Civilians</strong>) receive the exact same word (e.g. <em>MANGO</em>). One or two players (<strong>Undercovers</strong>) receive a closely related word (e.g. <em>PAPAYA</em>). You won't know if you are a Civilian or an Undercover at first!</p>
+          </div>
+          <div class="rule-block">
+            <h4>🗣️ 2. Giving Clues</h4>
+            <p>In turn, each player provides a subtle, one-sentence clue about their word. Be careful: if your clue is too obvious, the Undercover can blend in. If your clue is too vague, others might suspect you!</p>
+          </div>
+          <div class="rule-block">
+            <h4>💬 3. Discussion &amp; Voting</h4>
+            <p>After everyone has given a clue, the group discusses suspicious statements. Everyone secretly votes for who they believe is an Undercover. You cannot vote for yourself.</p>
+          </div>
+          <div class="rule-block">
+            <h4>⚰️ 4. Elimination &amp; Win Conditions</h4>
+            <p>The player with the most votes is eliminated and their role is revealed.</p>
+            <ul>
+              <li><strong>Civilians Win:</strong> When all Undercover players are unmasked and eliminated.</li>
+              <li><strong>Undercover Wins:</strong> When the remaining Undercovers equal or outnumber the Civilians.</li>
+            </ul>
+          </div>
+          <div class="rule-block">
+            <h4>🏆 5. Scoring</h4>
+            <p>Civilians score 100 pts for team victory + 25 pts bonus for correctly voting out an Undercover. Undercovers score 150 pts for team victory + 50 pts survival bonus.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-close-rules-footer" class="btn btn-primary btn-block">Got It!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast / Alerts Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <!-- Application Logic Modules -->
+  <script type="module" src="/js/audio.js"></script>
+  <script type="module" src="/js/socketClient.js"></script>
+  <script type="module" src="/js/screens.js"></script>
+  <script type="module" src="/js/gameUI.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

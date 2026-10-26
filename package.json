@@ -1,0 +1,30 @@
+{
+  "name": "undercover-game",
+  "version": "1.0.0",
+  "description": "Complete browser-based Wi-Fi multiplayer party game for 3-6 players",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "sim": "node tests/multiClientSim.js",
+    "sim:tie": "node tests/tieRevoteSim.js"
+  },
+  "keywords": [
+    "undercover",
+    "party-game",
+    "multiplayer",
+    "socketio",
+    "offline",
+    "wifi-game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

@@ -330,9 +330,9 @@ body::after {
 }
 
 .btn-lg {
-  padding: 16px 28px;
-  font-size: 1.15rem;
-  min-height: 58px;
+  padding: 13px 24px;
+  font-size: 1.02rem;
+  min-height: 52px;
 }
 
 .btn-sm {
@@ -486,72 +486,72 @@ body::after {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 30px 10px 16px;
+  padding: 22px 14px 16px;
 }
 
 .hero-badge {
   display: inline-block;
-  padding: 7px 18px;
+  padding: 6px 16px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.6);
   font-family: var(--font-game);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 1.5px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
-/* Layered 3D Game Title (exact match to "GAME UI KIT" in reference image) */
+/* Layered 3D Game Title - scaled ~10% down for mobile screens */
 .hero-title {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   user-select: none;
 }
 
 .hero-title .title-top {
   font-family: var(--font-game);
-  font-size: 4.2rem;
+  font-size: clamp(2.3rem, 7.8vw, 3.2rem);
   font-weight: 700;
   color: #ffd800;
   line-height: 0.95;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   transform: rotate(-2deg);
   text-shadow: 
     0 3px 0 #e6a700,
-    0 6px 0 #b37d00,
-    0 9px 0 #8c5e00,
-    0 16px 24px rgba(0, 0, 0, 0.4);
-  -webkit-text-stroke: 1.5px #fff7c2;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+    0 5px 0 #b37d00,
+    0 8px 0 #8c5e00,
+    0 14px 20px rgba(0, 0, 0, 0.35);
+  -webkit-text-stroke: 1.2px #fff7c2;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.22));
 }
 
 .hero-title .title-bottom {
   font-family: var(--font-game);
-  font-size: 4.5rem;
+  font-size: clamp(2.5rem, 8.8vw, 3.5rem);
   font-weight: 700;
   color: #ffffff;
   line-height: 0.95;
-  letter-spacing: 3.5px;
+  letter-spacing: 2.5px;
   transform: rotate(1deg);
   text-shadow: 
     0 3px 0 #6d28d9,
-    0 6px 0 #581c87,
-    0 10px 0 #3b0764,
-    0 18px 28px rgba(59, 7, 100, 0.55);
-  margin-top: 4px;
+    0 5px 0 #581c87,
+    0 8px 0 #3b0764,
+    0 14px 22px rgba(59, 7, 100, 0.5);
+  margin-top: 3px;
 }
 
 .hero-subtitle {
   color: #f3e8ff;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  max-width: 440px;
-  margin-bottom: 34px;
+  max-width: 380px;
+  margin-bottom: 24px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -559,20 +559,20 @@ body::after {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 420px;
+  gap: 12px;
+  max-width: 360px;
 }
 
 .network-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 36px;
-  padding: 10px 20px;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 8px 16px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.4);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

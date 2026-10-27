@@ -1,8 +1,8 @@
 {
   "id": "/undercover-game",
-  "name": "Undercover — Wi-Fi Multiplayer Party Game",
+  "name": "Undercover — Multiplayer Party Game",
   "short_name": "Undercover",
-  "description": "A thrilling multiplayer social deduction game. Find the imposter among your friends over home Wi-Fi!",
+  "description": "A thrilling multiplayer social deduction game. Find the imposter among your friends!",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

@@ -22,18 +22,7 @@ class App {
       audioIcon.textContent = sounds.isMuted() ? '🔇' : '🔊';
     }
 
-    // 2. Fetch network IP info on Home screen
-    fetch('/health')
-      .then(res => res.json())
-      .then(data => {
-        const infoEl = document.getElementById('home-network-info');
-        if (infoEl && data.lanIp) {
-          infoEl.textContent = `Wi-Fi URL: http://${data.lanIp}:${data.port || 3000}`;
-        }
-      })
-      .catch(() => {});
-
-    // 3. Bind UI interactions
+    // 2. Bind UI interactions
     this.bindNavigation();
     this.bindForms();
     this.bindInGameControls();

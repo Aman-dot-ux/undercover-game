@@ -34,12 +34,6 @@ class GameUI {
       categoryBadgeEl.textContent = lobbyData.settings.category || 'Random';
     }
 
-    // LAN URL
-    const lanUrlEl = document.getElementById('lobby-lan-url');
-    if (lanUrlEl) {
-      lanUrlEl.textContent = `${window.location.origin}`;
-    }
-
     // Min players warning
     const minWarningEl = document.getElementById('lobby-min-warning');
     if (minWarningEl) {

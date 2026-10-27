@@ -24,8 +24,21 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
-// Serve static frontend files
+// Special headers for PWA Service Worker & Manifest
 const publicDir = path.join(__dirname, 'public');
+
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(publicDir, 'sw.js'));
+});
+
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(publicDir, 'manifest.json'));
+});
+
+// Serve static frontend files
 app.use(express.static(publicDir));
 app.use(express.json());
 

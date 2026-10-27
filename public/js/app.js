@@ -38,10 +38,76 @@ class App {
     this.bindForms();
     this.bindInGameControls();
 
-    // 4. Initialize Socket connection
+    // 4. Initialize PWA / WebAPK install support & Service Worker
+    this.setupPWA();
+
+    // 5. Initialize Socket connection
     client.init(() => {
       this.bindSocketEvents();
     });
+  }
+
+  // =========================================================================
+  // PWA / WEBAPK INSTALLATION & SERVICE WORKER
+  // =========================================================================
+  setupPWA() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => {
+            console.log('[PWA] Service Worker registered. Scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('[PWA] Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    let deferredPrompt = null;
+    const btnNavInstall = document.getElementById('btn-pwa-install-nav');
+    const btnHomeInstall = document.getElementById('btn-pwa-install-home');
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (!isStandalone) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (btnNavInstall) btnNavInstall.classList.remove('hidden');
+        if (btnHomeInstall) btnHomeInstall.classList.remove('hidden');
+        console.log('[PWA] Native install prompt ready.');
+      });
+
+      const handleInstall = async () => {
+        if (!deferredPrompt) {
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+          if (isIOS) {
+            screens.showToast("To install on iOS: Tap Share (box with arrow) → 'Add to Home Screen'!", 'info');
+          } else {
+            screens.showToast("To install: Open browser menu (⋮) → 'Install App' or 'Add to Home screen'", 'info');
+          }
+          return;
+        }
+
+        sounds.playClick();
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('[PWA] User response to install:', outcome);
+        deferredPrompt = null;
+        if (btnNavInstall) btnNavInstall.classList.add('hidden');
+        if (btnHomeInstall) btnHomeInstall.classList.add('hidden');
+      };
+
+      if (btnNavInstall) btnNavInstall.addEventListener('click', handleInstall);
+      if (btnHomeInstall) btnHomeInstall.addEventListener('click', handleInstall);
+
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App successfully installed as WebAPK!');
+        screens.showToast('🎉 Undercover installed successfully!', 'success');
+        if (btnNavInstall) btnNavInstall.classList.add('hidden');
+        if (btnHomeInstall) btnHomeInstall.classList.add('hidden');
+      });
+    }
   }
 
   // =========================================================================

@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>UNDERCOVER — Wi-Fi Multiplayer Party Game</title>
   <meta name="description" content="A thrilling social deduction party game. Find the Undercover player among your friends over home Wi-Fi!">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Undercover">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
@@ -25,6 +34,9 @@
           <span class="label">ROOM</span>
           <span id="nav-room-code" class="code">----</span>
         </div>
+        <button id="btn-pwa-install-nav" class="btn-icon pwa-install-btn hidden" aria-label="Install App" title="Install Undercover Game">
+          <span>📲</span>
+        </button>
         <button id="btn-audio-toggle" class="btn-icon" aria-label="Toggle Sound" title="Sound Effects">
           <span id="audio-icon">🔊</span>
         </button>
@@ -52,6 +64,9 @@
             </button>
             <button id="btn-goto-join" class="btn btn-yellow btn-lg">
               <span class="btn-icon">🔑</span> Join Room with Code
+            </button>
+            <button id="btn-pwa-install-home" class="btn btn-cyan btn-lg hidden">
+              <span class="btn-icon">📲</span> Install App (WebAPK)
             </button>
             <button id="btn-open-rules" class="btn btn-ghost-game">
               <span class="btn-icon">📖</span> How to Play &amp; Rules

@@ -159,7 +159,7 @@ async function runTieSimulation() {
 
     const postRevoteState = await new Promise(resolve => {
       const h = state => {
-        if (state.phase === 'elimination' && !state.lastElimination?.tie) {
+        if ((state.phase === 'elimination' || state.phase === 'game_over') && !state.lastElimination?.tie) {
           c1.off('game:state_update', h);
           resolve(state);
         }

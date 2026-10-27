@@ -908,8 +908,8 @@ body::after {
   perspective: 1400px;
   width: 100%;
   max-width: 390px;
-  margin: 18px auto;
-  height: 330px;
+  margin: 14px auto;
+  height: 360px;
 }
 
 .secret-card {
@@ -1043,19 +1043,157 @@ body::after {
   margin-top: 2px;
 }
 
+.word-desc-box {
+  background: #f5f3ff;
+  border: 1.5px dashed #c4b5fd;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 4px 0 8px;
+  max-width: 330px;
+  width: 100%;
+}
+
+.desc-label {
+  display: block;
+  font-family: var(--font-game);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #7c3aed;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.word-desc {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4c1d95;
+  line-height: 1.35;
+  margin: 0;
+}
+
 .role-desc {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #4b5563;
   max-width: 310px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .card-tap-hint.small {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #7c3aed;
+  margin-top: 8px;
+}
+
+/* ==================== ROLE REVEAL READINESS CARD ==================== */
+.role-readiness-card {
   margin-top: 14px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 3px solid #ede9fe;
+  box-shadow: 0 8px 20px -4px rgba(76, 29, 149, 0.25);
+}
+
+.role-readiness-card .readiness-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f3f0ff;
+}
+
+.role-readiness-card .readiness-header h4 {
+  font-family: var(--font-game);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #581c87;
+  margin: 0;
+}
+
+.readiness-players-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.readiness-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: #f8f6ff;
+  border: 2px solid #e9d5ff;
+  transition: all 0.25s ease;
+}
+
+.readiness-item.ready {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.readiness-item.waiting {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.readiness-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.readiness-left .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+.readiness-left .avatar.avatar-ready {
+  background: var(--game-green);
+}
+
+.readiness-left .player-name {
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1e1b4b;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.status-pill.status-ready {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1.5px solid #86efac;
+}
+
+.status-pill.status-waiting {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1.5px solid #fde68a;
 }
 
 .privacy-warning {

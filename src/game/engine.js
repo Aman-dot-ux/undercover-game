@@ -91,11 +91,13 @@ export class GameEngine {
     this.players = connectedPlayers.map((p, idx) => {
       const role = shuffledRoles[idx];
       const word = role === 'undercover' ? this.wordPair.undercover : this.wordPair.civilian;
+      const description = role === 'undercover' ? this.wordPair.undercoverDesc : this.wordPair.civilianDesc;
       return {
         id: p.id,
         nickname: p.nickname,
         role,
         word,
+        description,
         isAlive: true,
         readyForClues: false
       };
@@ -373,7 +375,8 @@ export class GameEngine {
         id: p.id,
         nickname: p.nickname,
         role: p.role,
-        word: p.word
+        word: p.word,
+        description: p.description
       })) : null,
       revealedWordPair: this.phase === PHASES.GAME_OVER ? this.wordPair : null,
       roundSummary: this.roundSummary,
@@ -393,6 +396,7 @@ export class GameEngine {
       nickname: player.nickname,
       role: player.role,
       word: player.word,
+      description: player.description,
       isAlive: player.isAlive,
       readyForClues: player.readyForClues
     };

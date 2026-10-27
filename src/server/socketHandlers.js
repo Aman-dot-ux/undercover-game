@@ -168,6 +168,44 @@ export function setupSocketHandlers(io, roomManager) {
     });
 
     // -----------------------------------------------------------------
+    // ROOM: SYNC (Instant state sync when tab wakes up or reconnects)
+    // -----------------------------------------------------------------
+    socket.on('room:sync', ({ roomCode, sessionToken }, callback) => {
+      try {
+        const result = roomManager.reconnectPlayer(roomCode, sessionToken, socket.id);
+        if (!result.success) {
+          return callback?.({ success: false, error: result.error });
+        }
+
+        socket.join(result.roomCode);
+        const room = result.room;
+        const player = result.player;
+
+        callback?.({
+          success: true,
+          roomCode: result.roomCode,
+          playerId: player.id,
+          nickname: player.nickname,
+          isHost: player.isHost,
+          phase: room.engine.phase
+        });
+
+        if (room.engine.phase !== PHASES.LOBBY) {
+          const privateState = room.engine.getPrivatePlayerState(player.id);
+          if (privateState) {
+            socket.emit('game:private_role', privateState);
+          }
+          socket.emit('game:state_update', room.engine.getPublicState());
+        } else {
+          socket.emit('room:lobby_update', roomManager.getLobbyState(result.roomCode));
+        }
+      } catch (err) {
+        console.error('Error in room:sync:', err);
+        callback?.({ success: false, error: 'Sync failed.' });
+      }
+    });
+
+    // -----------------------------------------------------------------
     // ROOM: TOGGLE READY
     // -----------------------------------------------------------------
     socket.on('room:toggle_ready', ({ roomCode, playerId }) => {

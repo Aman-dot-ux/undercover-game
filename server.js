@@ -13,12 +13,15 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS-friendly relative origin
+// Initialize Socket.IO with CORS-friendly relative origin and fast heartbeat intervals
 const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  pingInterval: 8000,
+  pingTimeout: 5000,
+  transports: ['websocket', 'polling']
 });
 
 // Serve static frontend files

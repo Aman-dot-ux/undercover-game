@@ -15,31 +15,56 @@ class SocketClient {
   }
 
   init(onConnectCallback) {
-    // Relative connection to current page's host and port
+    // Relative connection to current page's host and port with low-latency settings
     this.socket = io(window.location.origin, {
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 2000,
+      timeout: 10000,
+      transports: ['websocket', 'polling']
     });
 
     this.socket.on('connect', () => {
       this.connected = true;
       console.log('Connected to Undercover server via', window.location.origin);
 
-      // Attempt reconnection if credentials exist in sessionStorage
+      // Attempt immediate sync/reconnect if credentials exist in sessionStorage
       if (this.roomCode && this.sessionToken) {
-        this.reconnect();
+        this.syncState();
       }
 
       if (onConnectCallback) onConnectCallback();
     });
 
-    this.socket.on('disconnect', () => {
+    this.socket.on('disconnect', (reason) => {
       this.connected = false;
-      console.log('Disconnected from Undercover server.');
+      console.log('Disconnected from Undercover server:', reason);
+      if (reason === 'io server disconnect') {
+        this.socket.connect();
+      }
     });
 
     this.socket.on('connect_error', (err) => {
       console.warn('Socket connection error:', err.message);
+    });
+
+    // Auto-resync when browser tab becomes active, phone wakes up, or comes back online
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.roomCode && this.sessionToken) {
+        this.syncState();
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      if (this.roomCode && this.sessionToken) {
+        this.syncState();
+      }
+    });
+
+    window.addEventListener('online', () => {
+      if (this.roomCode && this.sessionToken) {
+        this.syncState();
+      }
     });
   }
 
@@ -70,19 +95,28 @@ class SocketClient {
   }
 
   reconnect() {
+    this.syncState();
+  }
+
+  syncState(callback) {
     if (!this.roomCode || !this.sessionToken) return;
 
-    this.socket.emit('room:reconnect', {
+    if (!this.connected && this.socket) {
+      this.socket.connect();
+    }
+
+    this.socket.emit('room:sync', {
       roomCode: this.roomCode,
       sessionToken: this.sessionToken
     }, (res) => {
       if (res && res.success) {
         this.isHost = res.isHost;
-        console.log('Reconnected to room', this.roomCode, 'as', res.nickname);
-      } else {
-        console.log('Previous session expired.');
+        console.log('[SYNC] Room', this.roomCode, 'state synced.');
+      } else if (res && !res.success) {
+        console.log('Previous session expired:', res.error);
         this.clearSession();
       }
+      if (callback) callback(res);
     });
   }
 

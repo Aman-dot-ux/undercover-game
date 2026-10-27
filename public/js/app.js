@@ -450,6 +450,9 @@ class App {
     client.socket.on('game:private_role', (privateState) => {
       this.privateRole = privateState;
       gameUI.setupRoleReveal(privateState);
+      if (this.currentState && this.currentState.phase === 'role_reveal') {
+        gameUI.renderRoleRevealReadiness(this.currentState, client.playerId);
+      }
     });
 
     // Public game state machine update
@@ -494,6 +497,7 @@ class App {
           if (this.privateRole) {
             gameUI.setupRoleReveal(this.privateRole);
           }
+          gameUI.renderRoleRevealReadiness(state, client.playerId);
           break;
         case 'clue_round':
           gameUI.renderClueRound(state, client.playerId);

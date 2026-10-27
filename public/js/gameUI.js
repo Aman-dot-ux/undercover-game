@@ -173,6 +173,11 @@ class GameUI {
       wordEl.textContent = privateState.word || '------';
     }
 
+    const wordDescEl = document.getElementById('player-word-description');
+    if (wordDescEl) {
+      wordDescEl.textContent = privateState.description || 'Give subtle clues without saying this word!';
+    }
+
     if (descEl) {
       if (privateState.role === 'undercover') {
         descEl.textContent = 'You have a slightly different word than Civilians! Give clever, subtle clues to blend in.';
@@ -189,6 +194,51 @@ class GameUI {
         btnConfirm.disabled = false;
         btnConfirm.textContent = 'I Understand & Am Ready for Clues';
       }
+    }
+  }
+
+  renderRoleRevealReadiness(state, myPlayerId) {
+    if (!state || !state.players) return;
+
+    const listContainer = document.getElementById('role-reveal-players-list');
+    const countEl = document.getElementById('role-reveal-count');
+
+    const alivePlayers = state.players.filter(p => p.isAlive);
+    const totalAlive = alivePlayers.length;
+    const readyCount = alivePlayers.filter(p => p.readyForClues).length;
+
+    if (countEl) {
+      countEl.textContent = `${readyCount} / ${totalAlive} Ready`;
+      if (readyCount === totalAlive && totalAlive > 0) {
+        countEl.className = 'tag tag-ready';
+      } else {
+        countEl.className = 'tag tag-waiting';
+      }
+    }
+
+    if (listContainer) {
+      listContainer.innerHTML = '';
+      alivePlayers.forEach(player => {
+        const isMe = player.id === myPlayerId;
+        const initial = (player.nickname || '?')[0].toUpperCase();
+        const isReady = Boolean(player.readyForClues);
+
+        const item = document.createElement('div');
+        item.className = `readiness-item ${isReady ? 'ready' : 'waiting'}`;
+
+        item.innerHTML = `
+          <div class="readiness-left">
+            <div class="avatar ${isReady ? 'avatar-ready' : ''}">${initial}</div>
+            <span class="player-name">${this.escapeHtml(player.nickname)} ${isMe ? '<small style="color:var(--accent-cyan); font-weight:700;">(You)</small>' : ''}</span>
+          </div>
+          <div class="readiness-status">
+            ${isReady
+              ? '<span class="status-pill status-ready"><span class="check-icon">✓</span> Understood</span>'
+              : '<span class="status-pill status-waiting"><span class="spin-icon">⏳</span> Reading...</span>'}
+          </div>
+        `;
+        listContainer.appendChild(item);
+      });
     }
   }
 
@@ -572,6 +622,7 @@ class GameUI {
           <div>
             <strong>${this.escapeHtml(p.nickname)}</strong>
             <div style="font-size:0.8rem; color:var(--text-secondary);">Word: "${this.escapeHtml(p.word)}"</div>
+            ${p.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${this.escapeHtml(p.description)}</div>` : ''}
           </div>
           <span class="role-reveal-pill ${isUnd ? 'undercover' : 'civilian'}">
             ${isUnd ? 'UNDERCOVER' : 'CIVILIAN'}

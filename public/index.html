@@ -103,12 +103,12 @@
               <label for="create-category">Word Category</label>
               <select id="create-category" class="input-field select-field">
                 <option value="Random" selected>🎲 Random / All Categories</option>
-                <option value="Food">🍕 Food & Drinks</option>
-                <option value="Animals">🦁 Animals & Nature</option>
-                <option value="Objects">🎸 Objects & Daily Items</option>
-                <option value="Places">🏝️ Places & Geography</option>
-                <option value="Sports">⚽ Sports & Activities</option>
-                <option value="Movies">🎬 Movies & Entertainment</option>
+                <option value="Food">🍕 Food & Street Delicacies</option>
+                <option value="Objects">🛺 Daily Life & Objects</option>
+                <option value="Places">🏛️ Places & Landmarks</option>
+                <option value="Sports">🏏 Sports & Games</option>
+                <option value="Movies">🎬 Cinema & Entertainment</option>
+                <option value="Animals">🐅 Animals & Nature</option>
               </select>
             </div>
 
@@ -228,11 +228,11 @@
                 <select id="lobby-setting-category" class="input-field select-sm">
                   <option value="Random">🎲 Random</option>
                   <option value="Food">🍕 Food</option>
-                  <option value="Animals">🦁 Animals</option>
-                  <option value="Objects">🎸 Objects</option>
-                  <option value="Places">🏝️ Places</option>
-                  <option value="Sports">⚽ Sports</option>
+                  <option value="Objects">🛺 Objects</option>
+                  <option value="Places">🏛️ Places</option>
+                  <option value="Sports">🏏 Sports</option>
                   <option value="Movies">🎬 Movies</option>
+                  <option value="Animals">🐅 Animals</option>
                 </select>
               </div>
               <div class="form-group flex-1">
@@ -307,6 +307,10 @@
                     <span class="secret-label">YOUR WORD</span>
                     <h2 id="player-secret-word" class="revealed-word">------</h2>
                   </div>
+                  <div class="word-desc-box">
+                    <span class="desc-label">💡 ABOUT THIS WORD</span>
+                    <p id="player-word-description" class="word-desc">Loading description...</p>
+                  </div>
                   <p id="player-role-description" class="role-desc">
                     Most players share this word. Give subtle clues without saying it!
                   </p>
@@ -319,6 +323,17 @@
               <button id="btn-confirm-role" class="btn btn-primary btn-lg btn-block">
                 I Understand &amp; Am Ready for Clues
               </button>
+            </div>
+
+            <!-- Readiness Status of all players -->
+            <div id="role-reveal-readiness" class="card role-readiness-card">
+              <div class="readiness-header flex-between">
+                <h4>👥 Player Readiness</h4>
+                <span id="role-reveal-count" class="tag tag-ready">0 / 0 Ready</span>
+              </div>
+              <div id="role-reveal-players-list" class="readiness-players-grid">
+                <!-- Dynamically rendered: Player Name + [✓ Ready / ⏳ Reading...] -->
+              </div>
             </div>
           </div>
 

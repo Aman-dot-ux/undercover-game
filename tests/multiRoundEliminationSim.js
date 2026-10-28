@@ -15,22 +15,27 @@ import { io as ClientIO } from 'socket.io-client';
 import { RoomManager } from '../src/server/rooms.js';
 import { setupSocketHandlers } from '../src/server/socketHandlers.js';
 
+const targetArg = process.argv.find(arg => arg.startsWith('--target='));
+const TARGET_URL = targetArg ? targetArg.split('=')[1] : null;
 const TEST_PORT = 3201;
-const SERVER_URL = `http://127.0.0.1:${TEST_PORT}`;
+const SERVER_URL = TARGET_URL || `http://127.0.0.1:${TEST_PORT}`;
 
 async function runMultiRoundSimulation() {
   console.log('===============================================================');
   console.log('  🎭 UNDERCOVER MULTI-ROUND & REPETITIVE CLICK TEST (6 PLAYERS)');
+  console.log(`  Target Server: ${SERVER_URL}`);
   console.log('===============================================================');
 
-  const app = express();
-  const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: '*' } });
-  const roomManager = new RoomManager();
-  setupSocketHandlers(io, roomManager);
-
-  await new Promise(resolve => server.listen(TEST_PORT, '127.0.0.1', resolve));
-  console.log(`[TEST] Server listening on ${SERVER_URL}`);
+  let app, server, io, roomManager;
+  if (!TARGET_URL) {
+    app = express();
+    server = http.createServer(app);
+    io = new Server(server, { cors: { origin: '*' } });
+    roomManager = new RoomManager();
+    setupSocketHandlers(io, roomManager);
+    await new Promise(resolve => server.listen(TEST_PORT, '127.0.0.1', resolve));
+    console.log(`[TEST] In-process server listening on ${SERVER_URL}`);
+  }
 
   let clients = [];
   try {
@@ -261,7 +266,7 @@ async function runMultiRoundSimulation() {
     console.log('===============================================================');
   } finally {
     clients.forEach(c => c.disconnect());
-    server.close();
+    if (server) server.close();
   }
 }
 

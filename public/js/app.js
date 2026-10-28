@@ -510,9 +510,13 @@ class App {
 
     // Lobby updates
     client.socket.on('room:lobby_update', (lobbyData) => {
-      this.currentLobby = lobbyData;
-      if (!lobbyData) return;
+      if (!lobbyData || !client.roomCode || !client.playerId) return;
 
+      // Ensure this client is still an active member of this room
+      const me = lobbyData.players?.find(p => p.id === client.playerId);
+      if (!me) return;
+
+      this.currentLobby = lobbyData;
       client.isHost = lobbyData.hostId === client.playerId;
       screens.updateNavRoom(lobbyData.roomCode);
 
@@ -535,8 +539,13 @@ class App {
 
     // Public game state machine update
     client.socket.on('game:state_update', (state) => {
+      if (!state || !client.roomCode || !client.playerId) return;
+
+      // Ensure this client is still an active member of this match
+      const me = state.players?.find(p => p.id === client.playerId);
+      if (!me) return;
+
       this.currentState = state;
-      if (!state) return;
 
       // Update Top Status Bar
       const roundNumEl = document.getElementById('game-round-num');
@@ -617,8 +626,12 @@ class App {
     // Player kicked by host
     client.socket.on('room:kicked', () => {
       client.clearSession();
+      this.currentLobby = null;
+      this.currentState = null;
+      this.privateRole = null;
       screens.updateNavRoom(null);
       screens.showScreen('home');
+      sounds.playElimination?.();
       screens.showToast('You were removed from the room by the host.', 'error');
     });
   }

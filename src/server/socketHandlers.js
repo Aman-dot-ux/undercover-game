@@ -236,6 +236,10 @@ export function setupSocketHandlers(io, roomManager) {
 
       const target = room.players.find(p => p.id === targetPlayerId);
       if (target && target.socketId) {
+        const targetSocket = io.sockets.sockets.get(target.socketId);
+        if (targetSocket) {
+          targetSocket.leave(roomCode);
+        }
         io.to(target.socketId).emit('room:kicked');
       }
 

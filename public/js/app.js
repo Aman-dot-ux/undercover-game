@@ -377,15 +377,17 @@ class App {
       });
     }
 
-    // Discussion: Host Skip Early
+    // Discussion: Host Skip Early (Vote Now)
     const btnSkipDiscussion = document.getElementById('btn-host-skip-discussion');
     if (btnSkipDiscussion) {
       btnSkipDiscussion.addEventListener('click', () => {
         sounds.playClick();
         btnSkipDiscussion.disabled = true;
+        btnSkipDiscussion.textContent = 'Opening Voting...';
         client.startVotingEarly((res) => {
           if (res && !res.success) {
             btnSkipDiscussion.disabled = false;
+            btnSkipDiscussion.textContent = '⚡ Vote Now';
             screens.showToast(res.error, 'error');
           }
         });

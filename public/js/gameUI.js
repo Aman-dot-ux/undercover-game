@@ -372,6 +372,11 @@ class GameUI {
     if (hostControls) {
       if (isHost) {
         hostControls.classList.remove('hidden');
+        const btnSkip = document.getElementById('btn-host-skip-discussion');
+        if (btnSkip) {
+          btnSkip.disabled = false;
+          btnSkip.textContent = '⚡ Vote Now';
+        }
       } else {
         hostControls.classList.add('hidden');
       }

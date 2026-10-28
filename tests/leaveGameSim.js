@@ -6,9 +6,8 @@ import { RoomManager } from '../src/server/rooms.js';
 import { setupSocketHandlers } from '../src/server/socketHandlers.js';
 
 async function runTest() {
-  console.log('--- STARTING LEAVE GAME SIMULATION ---');
+  console.log('--- STARTING LEAVE GAME COMPREHENSIVE SIMULATION ---');
 
-  // Spin up temporary local server on dynamic port
   const app = express();
   const server = http.createServer(app);
   const serverIo = new Server(server, { cors: { origin: '*' } });
@@ -30,121 +29,230 @@ async function runTest() {
   }
 
   try {
-    const alice = await createClient('Alice'); // Host
-    const bob = await createClient('Bob');
-    const charlie = await createClient('Charlie');
-    const dave = await createClient('Dave');
+    // =========================================================================
+    // TEST 1: 3-PLAYER GAME -> 1 PLAYER LEAVES -> DROPS TO 2 -> 5S TIMER -> NAV LOBBY
+    // =========================================================================
+    console.log('\n[TEST 1] 3-player game: 1 leaves -> aborts with 5s countdown & returns to lobby');
+    const p1 = await createClient('Player1');
+    const p2 = await createClient('Player2');
+    const p3 = await createClient('Player3');
 
-    console.log('All 4 clients connected.');
-
-    // 1. Host creates room
     let roomCode = null;
-    let aliceId = null;
+    let p1Id, p2Id, p3Id;
+
     await new Promise((res) => {
-      alice.socket.emit('room:create', { nickname: 'Alice', settings: { category: 'Random', undercoverCount: 1 } }, (response) => {
-        roomCode = response.roomCode;
-        aliceId = response.playerId;
-        console.log(`Room created: ${roomCode}`);
+      p1.socket.emit('room:create', { nickname: 'Player1', settings: { category: 'Random', undercoverCount: 1 } }, (r) => {
+        roomCode = r.roomCode;
+        p1Id = r.playerId;
         res();
       });
     });
 
-    // 2. Bob, Charlie, Dave join
-    let bobId, charlieId, daveId;
+    await new Promise((res) => { p2.socket.emit('room:join', { roomCode, nickname: 'Player2' }, (r) => { p2Id = r.playerId; res(); }); });
+    await new Promise((res) => { p3.socket.emit('room:join', { roomCode, nickname: 'Player3' }, (r) => { p3Id = r.playerId; res(); }); });
+
+    p2.socket.emit('room:toggle_ready', { roomCode, playerId: p2Id });
+    p3.socket.emit('room:toggle_ready', { roomCode, playerId: p3Id });
+    await new Promise((r) => setTimeout(r, 100));
+
     await new Promise((res) => {
-      bob.socket.emit('room:join', { roomCode, nickname: 'Bob' }, (r) => { bobId = r.playerId; res(); });
+      p1.socket.emit('game:start', { roomCode, hostId: p1Id }, (r) => { res(); });
     });
-    await new Promise((res) => {
-      charlie.socket.emit('room:join', { roomCode, nickname: 'Charlie' }, (r) => { charlieId = r.playerId; res(); });
+
+    let p3LeftReceived = false;
+    let t1CountdownReceived = false;
+    let t1CountdownReason = '';
+    let t1NavLobbyReceived = false;
+
+    p1.socket.on('game:player_left', (d) => {
+      if (d.nickname === 'Player3') p3LeftReceived = true;
     });
-    await new Promise((res) => {
-      dave.socket.emit('room:join', { roomCode, nickname: 'Dave' }, (r) => { daveId = r.playerId; res(); });
+
+    p1.socket.on('game:ending_countdown', (d) => {
+      t1CountdownReceived = true;
+      t1CountdownReason = d.reason;
     });
 
-    console.log('All 4 players joined room.');
+    p1.socket.on('game:nav_lobby', () => {
+      t1NavLobbyReceived = true;
+    });
 
-    // 3. Toggle ready
-    bob.socket.emit('room:toggle_ready', { roomCode, playerId: bobId });
-    charlie.socket.emit('room:toggle_ready', { roomCode, playerId: charlieId });
-    dave.socket.emit('room:toggle_ready', { roomCode, playerId: daveId });
-
-    await new Promise((r) => setTimeout(r, 200));
-
-    // 4. Host starts game
+    // Player 3 leaves 3-player game
     await new Promise((res) => {
-      alice.socket.emit('game:start', { roomCode, hostId: aliceId }, (r) => {
-        console.log('Game start response:', r);
-        if (!r.success) throw new Error(r.error);
+      p3.socket.emit('game:leave', { roomCode, playerId: p3Id }, (r) => { res(r); });
+    });
+
+    await new Promise((r) => setTimeout(r, 150));
+    if (!p3LeftReceived) throw new Error('TEST 1 FAILED: Player3 left notification not received!');
+    if (!t1CountdownReceived) throw new Error('TEST 1 FAILED: 5s ending countdown was NOT triggered when dropping below 3 players!');
+    console.log(`✓ TEST 1 PASSED: 5s countdown triggered with reason: "${t1CountdownReason}"`);
+
+    console.log('Waiting 5.3s for countdown to finish and return to lobby...');
+    await new Promise((r) => setTimeout(r, 5300));
+    if (!t1NavLobbyReceived) throw new Error('TEST 1 FAILED: game:nav_lobby was not received!');
+    console.log('✓ TEST 1 PASSED: Players successfully navigated to lobby.');
+
+    p1.socket.disconnect();
+    p2.socket.disconnect();
+    p3.socket.disconnect();
+
+    // =========================================================================
+    // TEST 2: 4-PLAYER GAME -> CIVILIAN LEAVES -> 3 REMAIN -> GAME CONTINUES (NO ABORT)
+    // =========================================================================
+    console.log('\n[TEST 2] 4-player game: Civilian leaves -> 3 remain -> game continues seamlessly');
+    const c1 = await createClient('C1');
+    const c2 = await createClient('C2');
+    const c3 = await createClient('C3');
+    const c4 = await createClient('C4');
+
+    let rc2 = null;
+    let c1Id, c2Id, c3Id, c4Id;
+
+    await new Promise((res) => {
+      c1.socket.emit('room:create', { nickname: 'C1', settings: { category: 'Random', undercoverCount: 1 } }, (r) => {
+        rc2 = r.roomCode;
+        c1Id = r.playerId;
         res();
       });
     });
 
-    console.log('Game active. Setting up listeners for player left & countdown...');
+    await new Promise((res) => { c2.socket.emit('room:join', { roomCode: rc2, nickname: 'C2' }, (r) => { c2Id = r.playerId; res(); }); });
+    await new Promise((res) => { c3.socket.emit('room:join', { roomCode: rc2, nickname: 'C3' }, (r) => { c3Id = r.playerId; res(); }); });
+    await new Promise((res) => { c4.socket.emit('room:join', { roomCode: rc2, nickname: 'C4' }, (r) => { c4Id = r.playerId; res(); }); });
 
-    let playerLeftReceived = false;
-    let endingCountdownReceived = false;
-    let endingCountdownReason = '';
-    let navLobbyReceived = false;
+    c2.socket.emit('room:toggle_ready', { roomCode: rc2, playerId: c2Id });
+    c3.socket.emit('room:toggle_ready', { roomCode: rc2, playerId: c3Id });
+    c4.socket.emit('room:toggle_ready', { roomCode: rc2, playerId: c4Id });
+    await new Promise((r) => setTimeout(r, 100));
 
-    alice.socket.on('game:player_left', (data) => {
-      console.log('[Alice received game:player_left]:', data);
-      if (data.nickname === 'Dave' && data.playerId === daveId) {
-        playerLeftReceived = true;
-      }
+    await new Promise((res) => {
+      c1.socket.emit('game:start', { roomCode: rc2, hostId: c1Id }, (r) => { res(); });
     });
 
-    alice.socket.on('game:ending_countdown', (data) => {
-      console.log('[Alice received game:ending_countdown]:', data);
-      endingCountdownReceived = true;
-      endingCountdownReason = data.reason;
+    const room2 = roomManager.getRoom(rc2);
+    // Find a civilian to leave
+    const civilian = room2.engine.players.find(p => p.role === 'civilian');
+    const civClient = [
+      { id: c1Id, client: c1 },
+      { id: c2Id, client: c2 },
+      { id: c3Id, client: c3 },
+      { id: c4Id, client: c4 }
+    ].find(x => x.id === civilian.id);
+
+    // Pick an observer who stays in the room
+    const civObserver = [c1, c2, c3, c4].find(c => c !== civClient.client);
+
+    let civLeftNotified = false;
+    let civCountdownTriggered = false;
+
+    civObserver.socket.on('game:player_left', (d) => {
+      if (d.playerId === civilian.id) civLeftNotified = true;
+    });
+    civObserver.socket.on('game:ending_countdown', () => {
+      civCountdownTriggered = true;
     });
 
-    alice.socket.on('game:nav_lobby', () => {
-      console.log('[Alice received game:nav_lobby]');
-      navLobbyReceived = true;
+    // Civilian leaves
+    await new Promise((res) => {
+      civClient.client.socket.emit('game:leave', { roomCode: rc2, playerId: civilian.id }, (r) => { res(r); });
     });
 
-    // 5. Dave leaves game
-    console.log('Dave is leaving the game...');
-    const leaveRes = await new Promise((res) => {
-      dave.socket.emit('game:leave', { roomCode, playerId: daveId }, (r) => {
-        res(r);
+    await new Promise((r) => setTimeout(r, 200));
+    if (!civLeftNotified) throw new Error('TEST 2 FAILED: game:player_left was not notified for civilian!');
+    if (civCountdownTriggered) throw new Error('TEST 2 FAILED: Ending countdown should NOT trigger when a civilian leaves and 3 players remain!');
+    console.log('✓ TEST 2 PASSED: Notification sent, game did NOT abort, 3 players still playing.');
+
+    c1.socket.disconnect();
+    c2.socket.disconnect();
+    c3.socket.disconnect();
+    c4.socket.disconnect();
+
+    // =========================================================================
+    // TEST 3: 4-PLAYER GAME -> UNDERCOVER LEAVES -> GAME ENDS & RETURNS TO LOBBY
+    // =========================================================================
+    console.log('\n[TEST 3] 4-player game: Undercover leaves -> game ends with 5s timer & returns to lobby');
+    const u1 = await createClient('U1');
+    const u2 = await createClient('U2');
+    const u3 = await createClient('U3');
+    const u4 = await createClient('U4');
+
+    let rc3 = null;
+    let u1Id, u2Id, u3Id, u4Id;
+
+    await new Promise((res) => {
+      u1.socket.emit('room:create', { nickname: 'U1', settings: { category: 'Random', undercoverCount: 1 } }, (r) => {
+        rc3 = r.roomCode;
+        u1Id = r.playerId;
+        res();
       });
     });
 
-    console.log('Dave leave response:', leaveRes);
-    if (!leaveRes.success) throw new Error('Dave leave failed');
+    await new Promise((res) => { u2.socket.emit('room:join', { roomCode: rc3, nickname: 'U2' }, (r) => { u2Id = r.playerId; res(); }); });
+    await new Promise((res) => { u3.socket.emit('room:join', { roomCode: rc3, nickname: 'U3' }, (r) => { u3Id = r.playerId; res(); }); });
+    await new Promise((res) => { u4.socket.emit('room:join', { roomCode: rc3, nickname: 'U4' }, (r) => { u4Id = r.playerId; res(); }); });
 
-    // Wait a brief moment for socket broadcasts
-    await new Promise((r) => setTimeout(r, 200));
+    u2.socket.emit('room:toggle_ready', { roomCode: rc3, playerId: u2Id });
+    u3.socket.emit('room:toggle_ready', { roomCode: rc3, playerId: u3Id });
+    u4.socket.emit('room:toggle_ready', { roomCode: rc3, playerId: u4Id });
+    await new Promise((r) => setTimeout(r, 100));
 
-    if (!playerLeftReceived) {
-      throw new Error('FAILURE: game:player_left was not received by remaining players!');
-    }
-    console.log('SUCCESS: game:player_left was received correctly.');
+    await new Promise((res) => {
+      u1.socket.emit('game:start', { roomCode: rc3, hostId: u1Id }, (r) => { res(); });
+    });
 
-    if (!endingCountdownReceived) {
-      throw new Error('FAILURE: game:ending_countdown was not received when player count dropped to 3!');
-    }
-    console.log(`SUCCESS: game:ending_countdown received! Reason: "${endingCountdownReason}"`);
+    const room3 = roomManager.getRoom(rc3);
+    // Find the undercover player
+    const undercover = room3.engine.players.find(p => p.role === 'undercover');
+    const undClient = [
+      { id: u1Id, client: u1 },
+      { id: u2Id, client: u2 },
+      { id: u3Id, client: u3 },
+      { id: u4Id, client: u4 }
+    ].find(x => x.id === undercover.id);
 
-    // Wait for the 5-second countdown to complete and navigate back to lobby
-    console.log('Waiting 5.5s for timer to complete...');
-    await new Promise((r) => setTimeout(r, 5500));
+    const observer = [u1, u2, u3, u4].find(c => c !== undClient.client);
 
-    if (!navLobbyReceived) {
-      throw new Error('FAILURE: game:nav_lobby was not emitted after 5-second countdown!');
-    }
-    console.log('SUCCESS: game:nav_lobby received and room returned to lobby!');
+    let undLeftNotified = false;
+    let undCountdownReceived = false;
+    let undCountdownReason = '';
+    let undNavLobbyReceived = false;
 
-    // Cleanup
-    alice.socket.disconnect();
-    bob.socket.disconnect();
-    charlie.socket.disconnect();
-    dave.socket.disconnect();
+    observer.socket.on('game:player_left', (d) => {
+      if (d.playerId === undercover.id) undLeftNotified = true;
+    });
+    observer.socket.on('game:ending_countdown', (d) => {
+      undCountdownReceived = true;
+      undCountdownReason = d.reason;
+    });
+    observer.socket.on('game:nav_lobby', () => {
+      undNavLobbyReceived = true;
+    });
+
+    // Undercover leaves
+    console.log(`Undercover player (${undercover.nickname}) is leaving...`);
+    await new Promise((res) => {
+      undClient.client.socket.emit('game:leave', { roomCode: rc3, playerId: undercover.id }, (r) => { res(r); });
+    });
+
+    await new Promise((r) => setTimeout(r, 150));
+    if (!undLeftNotified) throw new Error('TEST 3 FAILED: game:player_left was not notified for undercover!');
+    if (!undCountdownReceived) throw new Error('TEST 3 FAILED: Ending countdown was NOT triggered when Undercover left!');
+    console.log(`✓ TEST 3 PASSED: Undercover departure triggered countdown with reason: "${undCountdownReason}"`);
+
+    console.log('Waiting 5.3s for countdown to finish and return to lobby...');
+    await new Promise((r) => setTimeout(r, 5300));
+    if (!undNavLobbyReceived) throw new Error('TEST 3 FAILED: game:nav_lobby was not received when Undercover left!');
+    console.log('✓ TEST 3 PASSED: All remaining players returned to lobby.');
+
+    u1.socket.disconnect();
+    u2.socket.disconnect();
+    u3.socket.disconnect();
+    u4.socket.disconnect();
     server.close();
 
-    console.log('--- ALL SIMULATION TESTS PASSED SUCCESSFULLY! ---');
+    console.log('\n======================================================');
+    console.log('🎉 ALL 3 LEAVE GAME SCENARIOS PASSED 100% SUCCESSFULLY!');
+    console.log('======================================================');
     process.exit(0);
   } catch (err) {
     console.error('SIMULATION TEST ERROR:', err);

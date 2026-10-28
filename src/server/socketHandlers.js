@@ -29,13 +29,13 @@ export function setupSocketHandlers(io, roomManager) {
     }
   }
 
-  function triggerGameEndingCountdown(roomCode, leaverNickname, remainingCount) {
+  function triggerGameEndingCountdown(roomCode, leaverNickname, remainingCount, customReason = null) {
     clearEndingTimer(roomCode);
     clearDiscussionTimer(roomCode);
     clearTieRevoteTimer(roomCode);
 
     let seconds = 5;
-    const reason = `The game is ending because ${leaverNickname} left`;
+    const reason = customReason || `The game is ending because ${leaverNickname} left`;
 
     io.to(roomCode).emit('game:ending_countdown', {
       reason,
@@ -314,6 +314,10 @@ export function setupSocketHandlers(io, roomManager) {
 
       const isInActiveGame = room.engine.phase !== PHASES.LOBBY && room.engine.phase !== PHASES.GAME_OVER;
 
+      // Check if leaver was an Undercover before removal
+      const enginePlayer = room.engine.players.find(p => p.id === playerId);
+      const isUndercover = enginePlayer && enginePlayer.role === 'undercover';
+
       // Remove player from room
       roomManager.removePlayer(roomCode, playerId);
 
@@ -327,11 +331,17 @@ export function setupSocketHandlers(io, roomManager) {
 
       if (isInActiveGame) {
         const remainingCount = room.players.length;
-        if (remainingCount <= 3) {
-          // Exactly 3 players (or fewer) remaining -> trigger 5-second countdown to end game
-          triggerGameEndingCountdown(roomCode, nickname, remainingCount);
+
+        // Condition 1: Player count drops below 3 (only 3 players were playing and one left)
+        // Condition 2: The Undercover left the game
+        if (remainingCount < 3) {
+          const reason = `Game aborted: Not enough players to continue (minimum 3 required). ${nickname} left.`;
+          triggerGameEndingCountdown(roomCode, nickname, remainingCount, reason);
+        } else if (isUndercover) {
+          const reason = `Game ended: The Undercover (${nickname}) left the game.`;
+          triggerGameEndingCountdown(roomCode, nickname, remainingCount, reason);
         } else {
-          // More than 3 players remain -> remove player from engine and continue match
+          // 3 or more players remain and leaver was a civilian -> continue match
           const removalResult = room.engine.removePlayerFromMatch(playerId);
           if (removalResult.gameOver) {
             clearDiscussionTimer(roomCode);

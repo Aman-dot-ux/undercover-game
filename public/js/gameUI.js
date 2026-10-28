@@ -277,9 +277,19 @@ class GameUI {
     }
 
     if (myClueBox) {
-      if (isMyTurn && me && !me.hasGivenClue) {
+      if (isMyTurn && me && me.isAlive && !me.hasGivenClue) {
+        if (myClueBox.classList.contains('hidden')) {
+          if (inputClue) inputClue.value = '';
+          const btnSubmit = myClueBox.querySelector('button[type="submit"]');
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Submit Public Clue';
+          }
+        }
         myClueBox.classList.remove('hidden');
-        if (inputClue) inputClue.focus();
+        if (inputClue && document.activeElement !== inputClue) {
+          inputClue.focus();
+        }
       } else {
         myClueBox.classList.add('hidden');
       }
@@ -309,6 +319,40 @@ class GameUI {
 
       if (clueCount === 0) {
         cluesList.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No clues submitted yet this round.</div>';
+      }
+
+      // Render Clue History from earlier rounds of this match
+      if (state.clueHistory && state.clueHistory.length > 0) {
+        const histContainer = document.createElement('div');
+        histContainer.className = 'clue-history-section';
+        histContainer.style.marginTop = '12px';
+        histContainer.style.paddingTop = '8px';
+        histContainer.style.borderTop = '1px dashed rgba(255,255,255,0.15)';
+
+        state.clueHistory.forEach(h => {
+          const roundHeader = document.createElement('div');
+          roundHeader.style.fontSize = '0.75rem';
+          roundHeader.style.fontWeight = '700';
+          roundHeader.style.color = 'var(--text-muted)';
+          roundHeader.style.marginBottom = '4px';
+          roundHeader.textContent = `ROUND ${h.round} CLUES:`;
+          histContainer.appendChild(roundHeader);
+
+          Object.entries(h.clues || {}).forEach(([pid, text]) => {
+            const p = state.players.find(pl => pl.id === pid);
+            if (p && text) {
+              const item = document.createElement('div');
+              item.className = 'clue-item previous-round-clue';
+              item.style.opacity = '0.75';
+              item.innerHTML = `
+                <span class="clue-author">${this.escapeHtml(p.nickname)}:</span>
+                <span class="clue-text">"${this.escapeHtml(text)}"</span>
+              `;
+              histContainer.appendChild(item);
+            }
+          });
+        });
+        cluesList.appendChild(histContainer);
       }
     }
   }
@@ -350,6 +394,39 @@ class GameUI {
           recapList.appendChild(item);
         }
       });
+
+      // Show history in discussion recap
+      if (state.clueHistory && state.clueHistory.length > 0) {
+        const histContainer = document.createElement('div');
+        histContainer.style.marginTop = '12px';
+        histContainer.style.paddingTop = '8px';
+        histContainer.style.borderTop = '1px dashed rgba(255,255,255,0.15)';
+
+        state.clueHistory.forEach(h => {
+          const roundHeader = document.createElement('div');
+          roundHeader.style.fontSize = '0.75rem';
+          roundHeader.style.fontWeight = '700';
+          roundHeader.style.color = 'var(--text-muted)';
+          roundHeader.style.marginBottom = '4px';
+          roundHeader.textContent = `ROUND ${h.round} CLUES:`;
+          histContainer.appendChild(roundHeader);
+
+          Object.entries(h.clues || {}).forEach(([pid, text]) => {
+            const p = state.players.find(pl => pl.id === pid);
+            if (p && text) {
+              const item = document.createElement('div');
+              item.className = 'clue-item previous-round-clue';
+              item.style.opacity = '0.75';
+              item.innerHTML = `
+                <span class="clue-author">${this.escapeHtml(p.nickname)}:</span>
+                <span class="clue-text">"${this.escapeHtml(text)}"</span>
+              `;
+              histContainer.appendChild(item);
+            }
+          });
+        });
+        recapList.appendChild(histContainer);
+      }
     }
   }
 
@@ -547,6 +624,11 @@ class GameUI {
       if (hostActions) {
         if (isHost && !state.winnerTeam) {
           hostActions.classList.remove('hidden');
+          const btnContinue = document.getElementById('btn-continue-round');
+          if (btnContinue) {
+            btnContinue.disabled = false;
+            btnContinue.textContent = 'Next Clue Round';
+          }
         } else {
           hostActions.classList.add('hidden');
         }
@@ -647,6 +729,11 @@ class GameUI {
     if (hostControls) {
       if (isHost) {
         hostControls.classList.remove('hidden');
+        const btnNext = document.getElementById('btn-next-match');
+        if (btnNext) {
+          btnNext.disabled = false;
+          btnNext.textContent = 'Play Next Match';
+        }
       } else {
         hostControls.classList.add('hidden');
       }

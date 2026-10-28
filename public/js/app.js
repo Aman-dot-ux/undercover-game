@@ -286,8 +286,12 @@ class App {
     if (btnStartGame) {
       btnStartGame.addEventListener('click', () => {
         sounds.playClick();
+        btnStartGame.disabled = true;
+        btnStartGame.textContent = 'Starting...';
         client.startGame((res) => {
           if (res && !res.success) {
+            btnStartGame.disabled = false;
+            btnStartGame.textContent = 'Start Game (Host)';
             screens.showToast(res.error || 'Cannot start game yet.', 'error');
           }
         });
@@ -348,8 +352,14 @@ class App {
         sounds.playClick();
 
         const inputClue = document.getElementById('input-clue-text');
+        const btnSubmitClue = formClue.querySelector('button[type="submit"]');
         const clueText = inputClue?.value.trim();
         if (!clueText) return;
+
+        if (btnSubmitClue) {
+          btnSubmitClue.disabled = true;
+          btnSubmitClue.textContent = 'Submitting...';
+        }
 
         client.submitClue(clueText, (res) => {
           if (res && res.success) {
@@ -357,6 +367,10 @@ class App {
             document.getElementById('my-clue-box')?.classList.add('hidden');
             screens.showToast('Clue submitted!', 'success');
           } else {
+            if (btnSubmitClue) {
+              btnSubmitClue.disabled = false;
+              btnSubmitClue.textContent = 'Submit Public Clue';
+            }
             screens.showToast(res?.error || 'Failed to submit clue.', 'error');
           }
         });
@@ -368,8 +382,10 @@ class App {
     if (btnSkipDiscussion) {
       btnSkipDiscussion.addEventListener('click', () => {
         sounds.playClick();
+        btnSkipDiscussion.disabled = true;
         client.startVotingEarly((res) => {
           if (res && !res.success) {
+            btnSkipDiscussion.disabled = false;
             screens.showToast(res.error, 'error');
           }
         });
@@ -417,6 +433,8 @@ class App {
     if (btnContinueRound) {
       btnContinueRound.addEventListener('click', () => {
         sounds.playClick();
+        btnContinueRound.disabled = true;
+        btnContinueRound.textContent = 'Starting Round...';
         client.continueRound();
       });
     }
@@ -426,6 +444,7 @@ class App {
     if (btnStartTieRevote) {
       btnStartTieRevote.addEventListener('click', () => {
         sounds.playClick();
+        btnStartTieRevote.disabled = true;
         client.startTieRevote();
       });
     }
@@ -462,8 +481,12 @@ class App {
     if (btnNextMatch) {
       btnNextMatch.addEventListener('click', () => {
         sounds.playClick();
+        btnNextMatch.disabled = true;
+        btnNextMatch.textContent = 'Preparing Next Match...';
         client.nextMatch((res) => {
           if (res && !res.success) {
+            btnNextMatch.disabled = false;
+            btnNextMatch.textContent = 'Play Next Match';
             screens.showToast(res.error || 'Failed to start next match.', 'error');
           }
         });

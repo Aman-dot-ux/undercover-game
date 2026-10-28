@@ -40,6 +40,7 @@ export class GameEngine {
     this.turnOrder = []; // array of playerIds
     this.currentTurnIndex = 0;
     this.clues = {}; // playerId -> clueText
+    this.clueHistory = []; // array of { round, clues }
     
     // Discussion timer
     this.discussionSeconds = 45;
@@ -65,6 +66,7 @@ export class GameEngine {
     this.roundNumber += 1;
     this.phase = PHASES.ROLE_REVEAL;
     this.clues = {};
+    this.clueHistory = [];
     this.votes = {};
     this.isTieRevote = false;
     this.tiedPlayerIds = [];
@@ -129,6 +131,23 @@ export class GameEngine {
    */
   beginClueRound() {
     this.phase = PHASES.CLUE_ROUND;
+    if (!this.clueHistory) {
+      this.clueHistory = [];
+    }
+    // Archive previous clues if any were submitted in an earlier cycle of this match
+    if (this.clues && Object.keys(this.clues).length > 0) {
+      this.clueHistory.push({
+        round: this.roundNumber,
+        clues: { ...this.clues }
+      });
+    }
+
+    // Reset clues and votes so all living players can submit new clues & vote in the new round
+    this.clues = {};
+    this.votes = {};
+    this.isTieRevote = false;
+    this.tiedPlayerIds = [];
+
     const aliveIds = this.players.filter(p => p.isAlive).map(p => p.id);
     this.turnOrder = secureShuffle(aliveIds);
     this.currentTurnIndex = 0;
@@ -332,6 +351,7 @@ export class GameEngine {
     this.players = [];
     this.wordPair = null;
     this.clues = {};
+    this.clueHistory = [];
     this.votes = {};
     this.lastElimination = null;
     this.winnerTeam = null;
@@ -365,6 +385,7 @@ export class GameEngine {
       turnOrder: this.turnOrder,
       currentTurnPlayerId: this.turnOrder[this.currentTurnIndex] || null,
       clues: this.clues,
+      clueHistory: this.clueHistory || [],
       discussionRemaining: this.discussionRemaining,
       isTieRevote: this.isTieRevote,
       tiedPlayerIds: this.tiedPlayerIds,

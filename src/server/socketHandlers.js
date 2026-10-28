@@ -254,6 +254,10 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'Only the host can start the game.' });
       }
 
+      if (room.engine.phase !== PHASES.LOBBY) {
+        return callback?.({ success: false, error: 'Game has already started.' });
+      }
+
       if (room.players.length < 3) {
         return callback?.({ success: false, error: 'At least 3 players are required to start.' });
       }
@@ -318,6 +322,10 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'Only the host can advance early.' });
       }
 
+      if (room.engine.phase !== PHASES.DISCUSSION) {
+        return callback?.({ success: false, error: 'Voting can only be started during discussion.' });
+      }
+
       clearDiscussionTimer(roomCode);
       room.engine.beginVoting(false, []);
       io.to(roomCode).emit('game:state_update', room.engine.getPublicState());
@@ -362,6 +370,10 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'Only the host can close voting.' });
       }
 
+      if (room.engine.phase !== PHASES.VOTING) {
+        return callback?.({ success: false, error: 'Voting is not currently active.' });
+      }
+
       const resolveResult = room.engine.resolveVoting();
       io.to(roomCode).emit('game:state_update', room.engine.getPublicState());
 
@@ -395,6 +407,7 @@ export function setupSocketHandlers(io, roomManager) {
 
       if (room.engine.phase === PHASES.ELIMINATION && !room.engine.winnerTeam) {
         clearTieRevoteTimer(roomCode);
+        room.engine.roundNumber += 1;
         room.engine.beginClueRound();
         io.to(roomCode).emit('game:state_update', room.engine.getPublicState());
       }
@@ -425,6 +438,10 @@ export function setupSocketHandlers(io, roomManager) {
       const room = roomManager.getRoom(roomCode);
       if (!room || room.hostId !== hostId) {
         return callback?.({ success: false, error: 'Only the host can start the next match.' });
+      }
+
+      if (room.engine.phase !== PHASES.GAME_OVER) {
+        return callback?.({ success: false, error: 'Current match is not over yet.' });
       }
 
       clearDiscussionTimer(roomCode);

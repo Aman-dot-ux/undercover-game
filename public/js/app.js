@@ -378,21 +378,9 @@ class App {
     }
 
     // Discussion: Host Skip Early (Vote Now)
-    const btnSkipDiscussion = document.getElementById('btn-host-skip-discussion');
-    if (btnSkipDiscussion) {
-      btnSkipDiscussion.addEventListener('click', () => {
-        sounds.playClick();
-        btnSkipDiscussion.disabled = true;
-        btnSkipDiscussion.textContent = 'Opening Voting...';
-        client.startVotingEarly((res) => {
-          if (res && !res.success) {
-            btnSkipDiscussion.disabled = false;
-            btnSkipDiscussion.textContent = '⚡ Vote Now';
-            screens.showToast(res.error, 'error');
-          }
-        });
-      });
-    }
+    // NOTE: The live click handler is re-attached on every discussion render
+    // inside the game:state_update → case 'discussion' block below, to guarantee
+    // the button is always fresh and enabled after round transitions.
 
     // Voting: Submit Vote
     const btnSubmitVote = document.getElementById('btn-submit-vote');
@@ -593,6 +581,30 @@ class App {
           break;
         case 'discussion':
           gameUI.renderDiscussion(state, client.isHost);
+          // Re-attach Vote Now click every time discussion renders so the
+          // button is never left disabled after round transitions.
+          if (client.isHost) {
+            const btnSkip = document.getElementById('btn-host-skip-discussion');
+            if (btnSkip) {
+              // Remove any previously attached handler to avoid stacking
+              const fresh = btnSkip.cloneNode(true);
+              btnSkip.parentNode.replaceChild(fresh, btnSkip);
+              fresh.disabled = false;
+              fresh.textContent = '⚡ Vote Now';
+              fresh.addEventListener('click', () => {
+                sounds.playClick();
+                fresh.disabled = true;
+                fresh.textContent = 'Opening Voting...';
+                client.startVotingEarly((res) => {
+                  if (res && !res.success) {
+                    fresh.disabled = false;
+                    fresh.textContent = '⚡ Vote Now';
+                    screens.showToast(res.error, 'error');
+                  }
+                });
+              });
+            }
+          }
           break;
         case 'voting':
           gameUI.renderVoting(state, client.playerId, client.isHost);

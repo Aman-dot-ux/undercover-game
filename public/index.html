@@ -222,6 +222,11 @@
             <button id="btn-start-game" class="btn btn-primary btn-lg flex-1 hidden" disabled>
               <span class="btn-icon">🚀</span> Start Game
             </button>
+
+            <!-- Leave Lobby Button -->
+            <button id="btn-leave-lobby" class="btn btn-leave btn-sm" title="Leave this lobby">
+              🚪 Leave
+            </button>
           </div>
 
           <!-- Host Settings Drawer (Host only) -->
@@ -278,6 +283,22 @@
               <button id="btn-ingame-lobby" class="btn btn-ghost btn-sm" title="End match and return room to lobby">
                 🏠 Exit to Lobby
               </button>
+            </div>
+          </div>
+
+          <!-- Leave Game Bar (visible to ALL players during active game) -->
+          <div id="in-game-player-bar" class="card in-game-player-bar hidden">
+            <button id="btn-leave-game" class="btn btn-leave btn-sm" title="Leave the current game">
+              🚪 Leave Game
+            </button>
+          </div>
+
+          <!-- Game Ending Countdown Banner -->
+          <div id="game-ending-banner" class="game-ending-banner hidden">
+            <div class="ending-icon">⚠️</div>
+            <div class="ending-text">
+              <strong id="ending-reason">Game ending...</strong>
+              <span id="ending-countdown-text">Ending in <span id="ending-seconds">5</span>s</span>
             </div>
           </div>
 

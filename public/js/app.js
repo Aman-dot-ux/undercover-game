@@ -490,6 +490,30 @@ class App {
         client.returnToLobby();
       });
     }
+
+    // Leave Game / Room Handler (Lobby and In-Game)
+    const handleLeaveGame = () => {
+      sounds.playClick();
+      if (!confirm('Are you sure you want to leave the game?')) return;
+      client.leaveGame(() => {
+        screens.showToast('You left the game.', 'info');
+      });
+      this.currentLobby = null;
+      this.currentState = null;
+      this.privateRole = null;
+      screens.updateNavRoom(null);
+      screens.showScreen('home');
+    };
+
+    const btnLeaveLobby = document.getElementById('btn-leave-lobby');
+    if (btnLeaveLobby) {
+      btnLeaveLobby.addEventListener('click', handleLeaveGame);
+    }
+
+    const btnLeaveGame = document.getElementById('btn-leave-game');
+    if (btnLeaveGame) {
+      btnLeaveGame.addEventListener('click', handleLeaveGame);
+    }
   }
 
   // =========================================================================
@@ -509,6 +533,10 @@ class App {
       this.currentLobby = lobbyData;
       client.isHost = lobbyData.hostId === client.playerId;
       screens.updateNavRoom(lobbyData.roomCode);
+
+      // Hide game ending banner if returning to lobby
+      const banner = document.getElementById('game-ending-banner');
+      if (banner) banner.classList.add('hidden');
 
       // Only switch screen if not already in an active game
       if (screens.currentScreen !== 'game') {
@@ -565,6 +593,16 @@ class App {
           inGameHostBar.classList.remove('hidden');
         } else {
           inGameHostBar.classList.add('hidden');
+        }
+      }
+
+      // In-Game Player Controls visibility (Leave Game)
+      const inGamePlayerBar = document.getElementById('in-game-player-bar');
+      if (inGamePlayerBar) {
+        if (state.phase !== 'game_over') {
+          inGamePlayerBar.classList.remove('hidden');
+        } else {
+          inGamePlayerBar.classList.add('hidden');
         }
       }
 
@@ -633,8 +671,38 @@ class App {
 
     // Host returned all to lobby
     client.socket.on('game:nav_lobby', () => {
+      const banner = document.getElementById('game-ending-banner');
+      if (banner) banner.classList.add('hidden');
       screens.showScreen('lobby');
       screens.showToast('Returned to room lobby.', 'info');
+    });
+
+    // Player left notification
+    client.socket.on('game:player_left', ({ playerId, nickname }) => {
+      if (playerId === client.playerId) return;
+      screens.showToast(`⚠️ ${nickname} has left the game.`, 'warn');
+      sounds.playTick?.();
+    });
+
+    // 5-second countdown when active players drop to 3 or fewer
+    client.socket.on('game:ending_countdown', ({ reason, seconds, leaverName }) => {
+      const banner = document.getElementById('game-ending-banner');
+      const reasonEl = document.getElementById('ending-reason');
+      const secondsEl = document.getElementById('ending-seconds');
+
+      if (banner) banner.classList.remove('hidden');
+      if (reasonEl) reasonEl.textContent = reason || `Game is ending because ${leaverName} left`;
+      if (secondsEl) secondsEl.textContent = seconds || 5;
+
+      sounds.playElimination?.();
+      screens.showToast(`⚠️ ${reason}`, 'error');
+    });
+
+    // Countdown tick
+    client.socket.on('game:ending_tick', ({ remaining }) => {
+      const secondsEl = document.getElementById('ending-seconds');
+      if (secondsEl) secondsEl.textContent = remaining;
+      sounds.playTick?.();
     });
 
     // Player kicked by host

@@ -254,6 +254,18 @@ class SocketClient {
       hostId: this.playerId
     });
   }
+
+  leaveGame(callback) {
+    if (!this.roomCode || !this.playerId) {
+      this.clearSession();
+      if (callback) callback({ success: true });
+      return;
+    }
+    const roomCode = this.roomCode;
+    const playerId = this.playerId;
+    this.clearSession();
+    this.socket.emit('game:leave', { roomCode, playerId }, callback);
+  }
 }
 
 export const client = new SocketClient();

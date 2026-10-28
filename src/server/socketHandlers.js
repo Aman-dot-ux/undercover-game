@@ -5,6 +5,15 @@ export function setupSocketHandlers(io, roomManager) {
   const discussionTimers = new Map();
   // Map of active tie revote auto-transition timers: roomCode -> timeout
   const tieRevoteTimers = new Map();
+  // Map of active game ending countdown timers: roomCode -> timerInterval
+  const endingTimers = new Map();
+
+  function clearEndingTimer(roomCode) {
+    if (endingTimers.has(roomCode)) {
+      clearInterval(endingTimers.get(roomCode));
+      endingTimers.delete(roomCode);
+    }
+  }
 
   function clearDiscussionTimer(roomCode) {
     if (discussionTimers.has(roomCode)) {
@@ -18,6 +27,45 @@ export function setupSocketHandlers(io, roomManager) {
       clearTimeout(tieRevoteTimers.get(roomCode));
       tieRevoteTimers.delete(roomCode);
     }
+  }
+
+  function triggerGameEndingCountdown(roomCode, leaverNickname, remainingCount) {
+    clearEndingTimer(roomCode);
+    clearDiscussionTimer(roomCode);
+    clearTieRevoteTimer(roomCode);
+
+    let seconds = 5;
+    const reason = `The game is ending because ${leaverNickname} left`;
+
+    io.to(roomCode).emit('game:ending_countdown', {
+      reason,
+      seconds,
+      leaverName: leaverNickname,
+      remainingCount
+    });
+
+    const interval = setInterval(() => {
+      seconds -= 1;
+      const currentRoom = roomManager.getRoom(roomCode);
+      if (!currentRoom || currentRoom.players.length === 0) {
+        clearEndingTimer(roomCode);
+        return;
+      }
+
+      if (seconds > 0) {
+        io.to(roomCode).emit('game:ending_tick', { remaining: seconds });
+      } else {
+        clearEndingTimer(roomCode);
+        currentRoom.engine.returnToLobby();
+        for (const p of currentRoom.players) {
+          p.isReady = p.isHost;
+        }
+        io.to(roomCode).emit('game:nav_lobby');
+        io.to(roomCode).emit('room:lobby_update', roomManager.getLobbyState(roomCode));
+      }
+    }, 1000);
+
+    endingTimers.set(roomCode, interval);
   }
 
   function handleTieRevote(roomCode, tiedIds) {
@@ -248,6 +296,56 @@ export function setupSocketHandlers(io, roomManager) {
     });
 
     // -----------------------------------------------------------------
+    // ROOM / GAME: LEAVE GAME
+    // -----------------------------------------------------------------
+    socket.on('game:leave', ({ roomCode, playerId }, callback) => {
+      const room = roomManager.getRoom(roomCode);
+      if (!room) {
+        return callback?.({ success: false, error: 'Room not found.' });
+      }
+
+      const player = room.players.find(p => p.id === playerId);
+      if (!player) {
+        return callback?.({ success: false, error: 'Player not found in room.' });
+      }
+
+      const nickname = player.nickname;
+      socket.leave(roomCode);
+
+      const isInActiveGame = room.engine.phase !== PHASES.LOBBY && room.engine.phase !== PHASES.GAME_OVER;
+
+      // Remove player from room
+      roomManager.removePlayer(roomCode, playerId);
+
+      // Notify all remaining members
+      io.to(roomCode).emit('game:player_left', {
+        playerId,
+        nickname
+      });
+
+      callback?.({ success: true });
+
+      if (isInActiveGame) {
+        const remainingCount = room.players.length;
+        if (remainingCount <= 3) {
+          // Exactly 3 players (or fewer) remaining -> trigger 5-second countdown to end game
+          triggerGameEndingCountdown(roomCode, nickname, remainingCount);
+        } else {
+          // More than 3 players remain -> remove player from engine and continue match
+          const removalResult = room.engine.removePlayerFromMatch(playerId);
+          if (removalResult.gameOver) {
+            clearDiscussionTimer(roomCode);
+            clearTieRevoteTimer(roomCode);
+          }
+          io.to(roomCode).emit('game:state_update', room.engine.getPublicState());
+          io.to(roomCode).emit('room:lobby_update', roomManager.getLobbyState(roomCode));
+        }
+      } else {
+        io.to(roomCode).emit('room:lobby_update', roomManager.getLobbyState(roomCode));
+      }
+    });
+
+    // -----------------------------------------------------------------
     // GAME: START MATCH (Host only)
     // -----------------------------------------------------------------
     socket.on('game:start', ({ roomCode, hostId }, callback) => {
@@ -271,6 +369,7 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'All players must be ready before starting.' });
       }
 
+      clearEndingTimer(roomCode);
       clearDiscussionTimer(roomCode);
 
       // Start new round
@@ -426,6 +525,7 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'Only the host can restart the match.' });
       }
 
+      clearEndingTimer(roomCode);
       clearDiscussionTimer(roomCode);
       clearTieRevoteTimer(roomCode);
       room.engine.startNewRound(room.players, room.settings);
@@ -448,6 +548,7 @@ export function setupSocketHandlers(io, roomManager) {
         return callback?.({ success: false, error: 'Current match is not over yet.' });
       }
 
+      clearEndingTimer(roomCode);
       clearDiscussionTimer(roomCode);
       clearTieRevoteTimer(roomCode);
       room.engine.startNewRound(room.players, room.settings);
@@ -464,6 +565,7 @@ export function setupSocketHandlers(io, roomManager) {
       const room = roomManager.getRoom(roomCode);
       if (!room || room.hostId !== hostId) return;
 
+      clearEndingTimer(roomCode);
       clearDiscussionTimer(roomCode);
       clearTieRevoteTimer(roomCode);
       room.engine.returnToLobby();

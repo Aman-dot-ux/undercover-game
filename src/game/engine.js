@@ -344,6 +344,66 @@ export class GameEngine {
   }
 
   /**
+   * Remove a player from an active match (e.g. if player leaves mid-game).
+   */
+  removePlayerFromMatch(playerId) {
+    const idx = this.players.findIndex(p => p.id === playerId);
+    if (idx === -1) return { wasAlive: false, gameOver: false };
+
+    const player = this.players[idx];
+    const wasAlive = player.isAlive;
+    this.players.splice(idx, 1);
+
+    // Remove from turn order if present
+    const turnIdx = this.turnOrder.indexOf(playerId);
+    if (turnIdx !== -1) {
+      this.turnOrder.splice(turnIdx, 1);
+      if (turnIdx < this.currentTurnIndex) {
+        this.currentTurnIndex = Math.max(0, this.currentTurnIndex - 1);
+      }
+    }
+
+    // Clean up clues and votes
+    delete this.clues[playerId];
+    delete this.votes[playerId];
+
+    // If clue round and all remaining have submitted, advance to discussion
+    if (this.phase === PHASES.CLUE_ROUND && this.currentTurnIndex >= this.turnOrder.length) {
+      if (this.turnOrder.length > 0) {
+        this.beginDiscussion();
+      }
+    }
+
+    // Check Win Conditions if still in active game
+    let gameOver = false;
+    if (this.phase !== PHASES.LOBBY && this.phase !== PHASES.GAME_OVER) {
+      const aliveUndercovers = this.players.filter(p => p.role === 'undercover' && p.isAlive).length;
+      const aliveCivilians = this.players.filter(p => p.role === 'civilian' && p.isAlive).length;
+
+      if (aliveUndercovers === 0) {
+        this.winnerTeam = 'civilian';
+        gameOver = true;
+      } else if (aliveUndercovers >= aliveCivilians && aliveCivilians > 0) {
+        this.winnerTeam = 'undercover';
+        gameOver = true;
+      }
+
+      if (gameOver) {
+        this.phase = PHASES.GAME_OVER;
+        this.roundSummary = this.scoreManager.calculateRoundScores({
+          winnerTeam: this.winnerTeam,
+          players: this.players,
+          eliminatedPlayers: this.players.filter(p => !p.isAlive),
+          voteHistory: this.voteHistory,
+          wordPair: this.wordPair
+        });
+      }
+    }
+
+    return { wasAlive, gameOver };
+  }
+
+  /**
    * Reset the game back to lobby while retaining player scores.
    */
   returnToLobby() {

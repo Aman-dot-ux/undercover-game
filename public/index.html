@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>UNDERCOVER — Multiplayer Party Game</title>
   <meta name="description" content="A thrilling social deduction party game. Find the Undercover player among your friends!">
   <meta name="theme-color" content="#7c3aed">
@@ -94,7 +94,7 @@
           <form id="form-create-room">
             <div class="form-group">
               <label for="create-nickname">Your Nickname</label>
-              <input type="text" id="create-nickname" class="input-field" placeholder="e.g. Detective Sam" maxlength="16" required autocomplete="off">
+              <input type="text" id="create-nickname" class="input-field" placeholder="e.g. Detective Sam" maxlength="16" required autocomplete="off" enterkeyhint="next">
             </div>
 
             <div class="form-row">
@@ -163,12 +163,12 @@
           <form id="form-join-room">
             <div class="form-group">
               <label for="join-room-code">Room Code</label>
-              <input type="text" id="join-room-code" class="input-field room-code-input" placeholder="e.g. 7K2M" maxlength="4" required autocomplete="off" autocapitalize="characters">
+              <input type="text" id="join-room-code" class="input-field room-code-input" placeholder="e.g. 7K2M" maxlength="4" required autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="next">
             </div>
 
             <div class="form-group">
               <label for="join-nickname">Your Nickname</label>
-              <input type="text" id="join-nickname" class="input-field" placeholder="e.g. SecretAgent" maxlength="16" required autocomplete="off">
+              <input type="text" id="join-nickname" class="input-field" placeholder="e.g. SecretAgent" maxlength="16" required autocomplete="off" enterkeyhint="go">
             </div>
 
             <div class="btn-stack">
@@ -386,7 +386,7 @@
               <h4>It's Your Turn!</h4>
               <p class="sub-text">Type a subtle 1-line clue describing your word without giving it away.</p>
               <form id="form-submit-clue" class="clue-form">
-                <input type="text" id="input-clue-text" class="input-field" placeholder="Type your clue..." maxlength="50" autocomplete="off" required>
+                <input type="text" id="input-clue-text" class="input-field" placeholder="Type your clue..." maxlength="50" autocomplete="off" required enterkeyhint="send">
                 <button type="submit" class="btn btn-primary btn-block">Submit Public Clue</button>
               </form>
             </div>

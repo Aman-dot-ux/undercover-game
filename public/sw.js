@@ -15,6 +15,7 @@ const STATIC_SHELL_ASSETS = [
   '/js/gameUI.js',
   '/js/screens.js',
   '/js/socketClient.js',
+  '/js/voiceManager.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

@@ -15,6 +15,7 @@ class VoiceManager {
     this.isConnecting = false;
     this.currentRoomCode = null;
     this.currentPlayerId = null;
+    this.isTogglingMute = false;
 
     // Header Controls
     this.btnVoiceToggle = null;
@@ -213,17 +214,20 @@ class VoiceManager {
    * Toggle mute / unmute state with phone-friendly error handling.
    */
   async toggleMute() {
-    if (!this.room || !this.room.localParticipant) {
-      screens.showToast('Connecting voice...', 'info', 1200);
-      return;
-    }
-
-    // Try starting audio context on user click
-    if (typeof this.room.startAudio === 'function') {
-      this.room.startAudio().catch(() => {});
-    }
+    if (this.isTogglingMute) return;
+    this.isTogglingMute = true;
 
     try {
+      if (!this.room || !this.room.localParticipant) {
+        screens.showToast('Connecting voice...', 'info', 1200);
+        return;
+      }
+
+      // Try starting audio context on user click
+      if (typeof this.room.startAudio === 'function') {
+        this.room.startAudio().catch(() => {});
+      }
+
       const willMute = !this.isMuted;
 
       if (willMute) {
@@ -245,6 +249,8 @@ class VoiceManager {
     } catch (err) {
       console.error('[VOICE] Microphone permission or publish error:', err);
       screens.showToast('Microphone permission blocked. Please check browser settings.', 'error', 3000);
+    } finally {
+      this.isTogglingMute = false;
     }
   }
 
@@ -344,6 +350,7 @@ class VoiceManager {
     this.isConnecting = false;
     this.currentRoomCode = null;
     this.currentPlayerId = null;
+    this.isTogglingMute = false;
     this.hideVoiceControls();
 
     // Clean up attached audio elements

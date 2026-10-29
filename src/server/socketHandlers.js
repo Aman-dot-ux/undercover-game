@@ -650,4 +650,26 @@ export function setupSocketHandlers(io, roomManager) {
       }
     });
   });
+
+  function clearAllTimers() {
+    for (const [, timer] of discussionTimers) {
+      clearInterval(timer);
+    }
+    discussionTimers.clear();
+    for (const [, timer] of tieRevoteTimers) {
+      clearTimeout(timer);
+    }
+    tieRevoteTimers.clear();
+    for (const [, timer] of endingTimers) {
+      clearInterval(timer);
+    }
+    endingTimers.clear();
+  }
+
+  return {
+    clearAllTimers,
+    clearDiscussionTimer,
+    clearTieRevoteTimer,
+    clearEndingTimer
+  };
 }

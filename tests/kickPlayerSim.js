@@ -131,7 +131,11 @@ async function runKickSimulation() {
     console.log('===============================================================');
   } finally {
     clients.forEach(c => c.disconnect());
+    if (roomManager && roomManager.cleanupInterval) {
+      clearInterval(roomManager.cleanupInterval);
+    }
     if (server) server.close();
+    process.exit(0);
   }
 }
 

@@ -48,12 +48,14 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Stale-while-revalidate for assets, Network-only for WebSocket & dynamic API
+// Fetch: Network-only for localhost and navigation, cache only static assets in production
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. Strictly bypass real-time socket connections and API endpoints
+  // 1. Strictly bypass localhost, real-time socket connections, and API endpoints
   if (
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1' ||
     url.pathname.startsWith('/socket.io/') ||
     url.pathname.startsWith('/health') ||
     event.request.method !== 'GET'
@@ -61,13 +63,8 @@ self.addEventListener('fetch', (event) => {
     return; // Let browser handle request via normal network
   }
 
-  // 2. Navigation requests: Network-first with offline fallback to index.html
+  // 2. Navigation requests: Network-only (never serve offline mock shell for multiplayer game)
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html') || caches.match('/');
-      })
-    );
     return;
   }
 

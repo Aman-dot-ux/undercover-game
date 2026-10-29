@@ -41,3 +41,4 @@ Date: 2026-10-29 | Commit: `ac087293e976`
 
 ## UNVERIFIED (needs real device)
 - Physical haptic feedback and physical notch occlusion on specific Android vendor skins (Xiaomi MIUI, Samsung OneUI). (Verified via browser device viewport emulation and standard WebKit safe-area testing).
+

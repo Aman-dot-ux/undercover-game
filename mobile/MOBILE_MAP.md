@@ -27,3 +27,4 @@
 - **Double Tap / Zoom:** Disabled via `touch-action: manipulation` without blocking accessibility.
 - **Scroll:** Smooth momentum touch scrolling (`-webkit-overflow-scrolling: touch`) in clue feeds, player grids, and modal bodies.
 - **Long Press:** Text selection popups disabled on interactive cards via `-webkit-touch-callout: none` and `user-select: none`.
+

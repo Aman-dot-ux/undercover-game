@@ -58,7 +58,7 @@ test('Voice Chat - LiveKit Ephemeral Token & Room Isolation', async (t) => {
     assert.equal(claims.video.canPublish, true);
     assert.equal(claims.video.canSubscribe, true);
 
-    socket.disconnect();
+    socket.close();
   });
 
   await t.test('2. Strict rejection if player is not in the room', async () => {
@@ -79,7 +79,7 @@ test('Voice Chat - LiveKit Ephemeral Token & Room Isolation', async (t) => {
     assert.equal(tokenRes.success, false);
     assert.match(tokenRes.error, /Player not found/);
 
-    socket.disconnect();
+    socket.close();
   });
 
   await t.test('3. Room Isolation: Multiple rooms have distinct, segregated room claims', async () => {
@@ -124,11 +124,10 @@ test('Voice Chat - LiveKit Ephemeral Token & Room Isolation', async (t) => {
     assert.equal(claimsB.video.room, `undercover_${roomCodeB}`);
     assert.notEqual(claimsA.video.room, claimsB.video.room, 'Rooms must have separate isolated LiveKit room targets');
 
-    socketA.disconnect();
-    socketB.disconnect();
+    socketA.close();
+    socketB.close();
   });
 
-  io.close();
-  server.closeAllConnections?.();
-  await new Promise((resolve) => server.close(resolve));
+  clearInterval(roomManager.cleanupInterval);
+  await new Promise((r) => io.close(r));
 });

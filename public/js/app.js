@@ -557,7 +557,9 @@ class App {
       this.currentLobby = lobbyData;
       client.isHost = lobbyData.hostId === client.playerId;
       screens.updateNavRoom(lobbyData.roomCode);
-      voiceManager.joinRoom(lobbyData.roomCode, client.playerId);
+      if (!voiceManager.isConnected && !voiceManager.isConnecting) {
+        voiceManager.joinRoom(lobbyData.roomCode, client.playerId);
+      }
 
       // Hide game ending banner if returning to lobby
       const banner = document.getElementById('game-ending-banner');

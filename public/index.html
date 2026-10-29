@@ -576,6 +576,18 @@
       </div>
     </div>
 
+    <!-- Dedicated WebRTC Audio Tracks Container (Mobile Compatible) -->
+    <div id="livekit-audio-elements" style="display:none;" aria-hidden="true"></div>
+
+    <!-- Mobile-Optimized Floating Voice Mic Action Button -->
+    <div id="floating-voice-widget" class="floating-voice-widget hidden">
+      <button id="btn-floating-voice-toggle" class="btn-floating-voice mic-muted" aria-label="Toggle Microphone" title="Toggle Microphone (Mute / Unmute)">
+        <span class="floating-voice-pulse"></span>
+        <span id="floating-voice-icon" class="floating-voice-icon">🔇</span>
+        <span id="floating-voice-text" class="floating-voice-text">MUTED</span>
+      </button>
+    </div>
+
     <!-- Toast / Alerts Notification Container -->
     <div id="toast-container" class="toast-container"></div>
   </div>

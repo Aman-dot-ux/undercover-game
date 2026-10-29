@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import os from 'os';
 
 /**
@@ -52,3 +53,8 @@ export function getLocalIpAddress() {
 
 export const PORT = parseInt(process.env.PORT, 10) || 3000;
 export const HOST = '0.0.0.0';
+
+export const LIVEKIT_URL = process.env.LIVEKIT_URL || 'wss://undercover-voice-vi69lusf.livekit.cloud';
+export const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || 'APIkaHBWM668VVH';
+export const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || 'MPDdOBVahwsVSwvdarYunrAVpAxsfkyGrFkFbQ0uYkL';
+export const isVoiceConfigured = Boolean(LIVEKIT_URL && LIVEKIT_API_KEY && LIVEKIT_API_SECRET);

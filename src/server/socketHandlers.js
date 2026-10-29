@@ -1,4 +1,6 @@
 import { PHASES } from '../game/engine.js';
+import { AccessToken } from 'livekit-server-sdk';
+import { LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, isVoiceConfigured } from '../config.js';
 
 export function setupSocketHandlers(io, roomManager) {
   // Map of active discussion timers: roomCode -> timerInterval
@@ -250,6 +252,54 @@ export function setupSocketHandlers(io, roomManager) {
       } catch (err) {
         console.error('Error in room:sync:', err);
         callback?.({ success: false, error: 'Sync failed.' });
+      }
+    });
+
+    // -----------------------------------------------------------------
+    // VOICE: GET TOKEN (LiveKit Cloud Ephemeral Room-Scoped Token)
+    // -----------------------------------------------------------------
+    socket.on('voice:get_token', async ({ roomCode, playerId }, callback) => {
+      try {
+        if (!isVoiceConfigured) {
+          return callback?.({ success: false, error: 'Voice chat is not configured on this server.' });
+        }
+
+        const room = roomManager.getRoom(roomCode);
+        if (!room) {
+          return callback?.({ success: false, error: 'Room not found.' });
+        }
+
+        const player = room.players.find(p => p.id === playerId);
+        if (!player) {
+          return callback?.({ success: false, error: 'Player not found in this room.' });
+        }
+
+        // Ephemeral token cryptographically tied strictly to this room code
+        const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+          identity: playerId,
+          name: player.nickname,
+          ttl: '3h'
+        });
+
+        // Room isolation: Audio tracks only route within undercover_<roomCode>
+        at.addGrant({
+          roomJoin: true,
+          room: `undercover_${roomCode}`,
+          canPublish: true,
+          canSubscribe: true,
+          canPublishData: true
+        });
+
+        const token = await at.toJwt();
+        callback?.({
+          success: true,
+          token,
+          url: LIVEKIT_URL,
+          roomName: `undercover_${roomCode}`
+        });
+      } catch (err) {
+        console.error('[VOICE:GET_TOKEN ERROR]', err);
+        callback?.({ success: false, error: 'Could not generate voice token.' });
       }
     });
 

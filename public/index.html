@@ -20,6 +20,8 @@
   <link rel="stylesheet" href="/css/styles.css">
   <!-- Socket.IO client served directly from the local Node server -->
   <script src="/socket.io/socket.io.js"></script>
+  <!-- LiveKit Client SDK for WebRTC Voice Chat -->
+  <script src="/js/livekit-client.umd.js"></script>
 </head>
 <body>
   <div id="app" class="app-container">
@@ -34,6 +36,12 @@
           <span class="label">ROOM</span>
           <span id="nav-room-code" class="code">----</span>
         </div>
+        <!-- LiveKit Cloud Voice Chat Mic Control -->
+        <button id="btn-voice-toggle" class="btn-voice-pill hidden" aria-label="Toggle Microphone" title="Toggle Voice Chat Mic (Mute/Unmute)">
+          <span id="voice-pulse-ring" class="voice-pulse"></span>
+          <span id="voice-mic-icon" class="voice-icon">🔇</span>
+          <span id="voice-status-text" class="voice-text">Muted</span>
+        </button>
         <button id="btn-pwa-install-nav" class="btn-icon pwa-install-btn hidden" aria-label="Install App" title="Install Undercover Game">
           <span>📲</span>
         </button>
@@ -578,5 +586,8 @@
   <script type="module" src="/js/screens.js"></script>
   <script type="module" src="/js/gameUI.js"></script>
   <script type="module" src="/js/app.js"></script>
+  <!-- Cloudflare Web Analytics -->
+  <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "633a3c32edcc4d11b02a1eefaf96442e"}'></script>
+  <!-- End Cloudflare Web Analytics -->
 </body>
 </html>

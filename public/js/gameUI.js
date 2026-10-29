@@ -61,6 +61,7 @@ class GameUI {
 
         const item = document.createElement('div');
         item.className = 'player-item';
+        item.setAttribute('data-player-id', player.id);
 
         let badgeHtml = '';
         if (player.isHost) {
@@ -219,6 +220,7 @@ class GameUI {
 
         const item = document.createElement('div');
         item.className = `readiness-item ${isReady ? 'ready' : 'waiting'}`;
+        item.setAttribute('data-player-id', player.id);
 
         item.innerHTML = `
           <div class="readiness-left">
@@ -508,6 +510,7 @@ class GameUI {
         const card = document.createElement('div');
         card.className = `candidate-card ${canBeVotedFor ? '' : 'disabled'} ${state.isTieRevote && isEligibleInTie && !isMe ? 'tie-target' : ''}`;
         card.dataset.candidateId = p.id;
+        card.setAttribute('data-player-id', p.id);
 
         const initial = (p.nickname || '?')[0].toUpperCase();
 

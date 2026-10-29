@@ -21,7 +21,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^18.0.9",
     "express": "^4.21.2",
+    "livekit-client": "^2.23.0",
+    "livekit-server-sdk": "^2.19.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

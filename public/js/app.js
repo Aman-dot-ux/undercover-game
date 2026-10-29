@@ -7,6 +7,7 @@ import { client } from './socketClient.js';
 import { sounds } from './audio.js';
 import { screens } from './screens.js';
 import { gameUI } from './gameUI.js';
+import { voiceManager } from './voiceManager.js';
 
 class App {
   constructor() {
@@ -26,6 +27,7 @@ class App {
     this.bindNavigation();
     this.bindForms();
     this.bindInGameControls();
+    voiceManager.init();
 
     // 4. Initialize PWA / WebAPK install support & Service Worker
     this.setupPWA();
@@ -243,6 +245,7 @@ class App {
             screens.updateNavRoom(res.roomCode);
             screens.showScreen('lobby');
             screens.showToast(`Room ${res.roomCode} created!`, 'success');
+            voiceManager.joinRoom(res.roomCode, res.playerId);
           } else {
             screens.showToast(res?.error || 'Failed to create room.', 'error');
           }
@@ -279,6 +282,7 @@ class App {
             screens.updateNavRoom(res.roomCode);
             screens.showScreen('lobby');
             screens.showToast(`Joined Room ${res.roomCode}!`, 'success');
+            voiceManager.joinRoom(res.roomCode, res.playerId);
           } else {
             screens.showToast(res?.error || 'Failed to join room.', 'error');
           }
@@ -517,6 +521,7 @@ class App {
       client.leaveGame(() => {
         screens.showToast('You left the game.', 'info');
       });
+      voiceManager.leaveRoom();
       this.currentLobby = null;
       this.currentState = null;
       this.privateRole = null;
@@ -552,6 +557,7 @@ class App {
       this.currentLobby = lobbyData;
       client.isHost = lobbyData.hostId === client.playerId;
       screens.updateNavRoom(lobbyData.roomCode);
+      voiceManager.joinRoom(lobbyData.roomCode, client.playerId);
 
       // Hide game ending banner if returning to lobby
       const banner = document.getElementById('game-ending-banner');
@@ -727,6 +733,7 @@ class App {
     // Player kicked by host
     client.socket.on('room:kicked', () => {
       client.clearSession();
+      voiceManager.leaveRoom();
       this.currentLobby = null;
       this.currentState = null;
       this.privateRole = null;

@@ -1996,6 +1996,142 @@ body::after {
   50% { transform: translateY(-8px); }
 }
 
+/* ==================== LIVEKIT VOICE CHAT PILL & MIC ==================== */
+.btn-voice-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+/* Mic Muted State (Default - soft red/burgundy) */
+.btn-voice-pill.mic-muted {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(185, 28, 28, 0.45) 100%);
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.8);
+}
+
+.btn-voice-pill.mic-muted:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.4);
+}
+
+/* Mic Active / Unmuted State (vibrant emerald green) */
+.btn-voice-pill.mic-active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border-color: #a7f3d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-voice-pill.mic-active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
+}
+
+.btn-voice-pill:active {
+  transform: translateY(1px);
+}
+
+.btn-voice-pill .voice-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-voice-pill .voice-text {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+/* Pulsing audio wave ring when speaking */
+.voice-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-pill);
+  border: 2px solid #34d399;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.voice-pulse.speaking {
+  opacity: 1;
+  animation: voice-pulse-anim 1.2s infinite ease-out;
+}
+
+@keyframes voice-pulse-anim {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* ==================== ACTIVE SPEAKER AVATAR / CARD GLOW ==================== */
+.player-item.is-speaking,
+.candidate-card.is-speaking,
+.readiness-item.is-speaking {
+  position: relative;
+  box-shadow: 0 0 0 3px #10b981, 0 0 16px rgba(16, 185, 129, 0.5) !important;
+  animation: speaking-glow 1s infinite alternate ease-in-out;
+}
+
+.player-item.is-speaking .avatar,
+.candidate-card.is-speaking .avatar,
+.readiness-item.is-speaking .avatar {
+  border-color: #34d399 !important;
+  box-shadow: 0 0 10px #10b981 !important;
+  position: relative;
+}
+
+.player-item.is-speaking .avatar::after,
+.candidate-card.is-speaking .avatar::after {
+  content: '🗣️';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.85rem;
+  background: #064e3b;
+  border: 1px solid #34d399;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes speaking-glow {
+  0% {
+    box-shadow: 0 0 0 2px #10b981, 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 4px #34d399, 0 0 20px rgba(16, 185, 129, 0.8);
+  }
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
